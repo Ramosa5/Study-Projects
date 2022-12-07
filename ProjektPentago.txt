@@ -1,0 +1,1616 @@
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+#include <chrono>
+#include <string>
+#include <algorithm>
+
+
+#define WYMIAR 3
+#define GLEBOKOSC 3
+#define MINWARTOSC -10
+#define MAXWARTOSC 10
+
+using namespace std;
+
+void KoloKrzyz(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], bool CzyBot);
+void Pentago(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], bool CzyBot);
+
+void Zeruj(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR]);
+void Wypisz(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], string NickGracza, char ZnakGracza, int IleCzasu);
+void piszlinie(char znaklewo, char znakprawo, char znakprzemienny, char znaksrodeklewo, char znaksrodekprawo);
+void Obroc(char tab[WYMIAR][WYMIAR], char wKtoraStrone);
+void WybierzObrot(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], int KtoryRuch);
+void WpiszRuch(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakObecny, char& ZnakGracz1, char& ZnakGracz2, int& CzasPauzy, int& KtoryRuch, char HistoriaPlansz[4 * WYMIAR * WYMIAR], int HistoriaWpisan[4 * WYMIAR * WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], string NickObecny, int IleCzasu, bool& CzyPredefiniowanaPlansza);
+void ZmienZeton(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char& ZnakObecny, char& ZnakGracz1, char ZnakGracz2);
+void Pomoc();
+void PredefiniowanaPlansza(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakGracz1, char ZnakGracz2);
+void Pauza(int& CzasPauzy);
+void Opcje(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char& ZnakObecny, char& ZnakGracz1, char& ZnakGracz2);
+void OpisProgramu();
+void Przeglad(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char HistoriaPlansz[4 * WYMIAR * WYMIAR], int HistoriaWpisan[4 * WYMIAR * WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], int KtoryRuch, char ZnakGracz1, char ZnakGracz2, string Nick1, string Nick2, bool CzyKoloKrzyz);
+void Undo(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char HistoriaPlansz[4 * WYMIAR * WYMIAR], int HistoriaWpisan[4 * WYMIAR * WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], int& KtoryRuch);
+void wPrzod(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char HistoriaPlansz[4 * WYMIAR * WYMIAR], int HistoriaWpisan[4 * WYMIAR * WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], int& KtoryRuch, char ZnakGracz1, char ZnakGracz2);
+void WypiszPrzeglad(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], string NickGracza, char ZnakGracza, char Wpisanie, int Miejsce, char Obrot, char StronaObrotu, bool CzyKoloKrzyz, bool CzyKoncowyRuch);
+void WypiszWygrana(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakWygrany, bool CzyKoniecCzasu, bool CzyRemis, string Zwyciezca);
+
+int SprawdzWygrana(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakGracz1);
+int WpiszZnakDoTablicy(char tab[WYMIAR][WYMIAR], char znak, int pole);
+
+bool SprawdzWPoziomie(char tab1[WYMIAR][WYMIAR], char tab2[WYMIAR][WYMIAR], char& ZnakWygrany);
+bool SprawdzWPionie(char tab1[WYMIAR][WYMIAR], char tab2[WYMIAR][WYMIAR], char& ZnakWygrany);
+bool SprawdzUkos(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char& ZnakWygrany);
+
+void ZnajdzOptymalnaWartosc(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakGracza1, char ZnakGracza2, int KtoraGra, bool KoloKrzyz, char HistoriaPlansz[4 * WYMIAR * WYMIAR], int HistoriaWpisan[4 * WYMIAR * WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], int KtoryRuch, bool CzyPredefiniowanaPlansza);
+int AlfaBeta(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], int GlebokoscObecna, bool CzyMaksymalizujacyGracz, char ZnakGracza1, char ZnakGracza2, int Alfa, int Beta, int KtoraGra, bool KoloKrzyz, int KtoryRuch, bool CzyPredefiniowanaPlansza);
+int Wartosc(char Tablica[WYMIAR][WYMIAR], char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakGracza1, char ZnakGracza2, int KtoraGra, bool KoloKrzyz, int KtoryRuch, int  i, int j, int k, bool CzyPredefiniowanaPlansza);
+
+int main()
+{
+        char tabQ[WYMIAR][WYMIAR], tabW[WYMIAR][WYMIAR], tabA[WYMIAR][WYMIAR], tabS[WYMIAR][WYMIAR];
+        Zeruj(tabQ, tabW, tabA, tabS);
+
+        int ktoragra;
+        cout << endl << setw(20) << ' ' << "1 - Kolko i krzyzyk na dwoch graczy" << endl << setw(20) << ' ' << "2 - Kolko i krzyzyk z komputerem" << endl;
+        cout << setw(20) << ' ' << "3 - Pentago na dwoch graczy" << endl << setw(20) << ' ' << "4 - Pentago z komputerem" << endl;
+        cout << setw(20) << ' ' << "5 - Opis programu" << endl << setw(20) << ' ' << "6 - Wyjscie" << endl;
+        while (true)
+        {
+                while (!(cin >> ktoragra))
+                {
+                        cin.clear();
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        system("cls");
+                        cout << endl << setw(20) << ' ' << "1 - Kolko i krzyzyk na dwoch graczy" << endl << setw(20) << ' ' << "2 - Kolko i krzyzyk z komputerem" << endl;
+                        cout << setw(20) << ' ' << "3 - Pentago na dwoch graczy" << endl << setw(20) << ' ' << "4 - Pentago z komputerem" << endl;
+                        cout << setw(20) << ' ' << "5 - Opis programu" << endl << setw(20) << ' ' << "6 - Wyjscie" << endl;
+                }
+                cin.ignore(cin.rdbuf()->in_avail());
+                switch (ktoragra)
+                {
+                case 1: KoloKrzyz(tabQ, tabW, tabA, tabS, false); break;
+                case 2: KoloKrzyz(tabQ, tabW, tabA, tabS, true); break;
+                case 3: Pentago(tabQ, tabW, tabA, tabS, false); break;
+                case 4: Pentago(tabQ, tabW, tabA, tabS, true); break;
+                case 5: OpisProgramu(); break;
+                case 6: return 0;
+                default: system("cls"); break;
+                }
+                cout << endl << setw(20) << ' ' << "1 - Kolko i krzyzyk na dwoch graczy" << endl << setw(20) << ' ' << "2 - Kolko i krzyzyk z komputerem" << endl;
+                cout << setw(20) << ' ' << "3 - Pentago na dwoch graczy" << endl << setw(20) << ' ' << "4 - Pentago z komputerem" << endl;
+                cout << setw(20) << ' ' << "5 - Opis programu" << endl << setw(20) << ' ' << "6 - Wyjscie" << endl;
+        }
+        return 0;
+}
+
+void Pentago(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], bool CzyBot)
+{
+        Zeruj(tabQ, tabW, tabA, tabS);
+        string Nick1, Nick2, NickObecny;
+        char ZnakGracz1, ZnakGracz2, ZnakObecny, HistoriaPlansz[4 * WYMIAR * WYMIAR];
+        char HistoriaObrotow[8 * WYMIAR * WYMIAR] = {};                                                                                                                         //w parzystych polach tablicy sa obracane plansze a nieparzyste to obrot z lub x
+        int CzasGracz1 = 0, CzasGracz2 = 0, LimitCzasu, CzasPauzy = 0, HistoriaWpisan[4 * WYMIAR * WYMIAR];
+        cout << endl << "Podaj limit czasowy w sekundach: ";
+
+        while (!(cin >> LimitCzasu) || LimitCzasu <= 0)
+        {
+                cout << "Blednie wprowadzony limit czasowy. Podaj limit czasowy ponownie: " << endl;
+                cin.clear();
+                cin.ignore(cin.rdbuf()->in_avail());
+        }
+        cin.ignore(cin.rdbuf()->in_avail());
+
+        if (!CzyBot)
+        {
+                cout << endl << "Podaj nick gracza1: ";
+                cin >> Nick1;
+                cout << endl << "Podaj nick gracza2: ";
+                cin >> Nick2;
+                cout << endl << "Podaj zeton gracza1: ";
+                cin >> ZnakGracz1;
+                cin.ignore(cin.rdbuf()->in_avail());
+                int buf = 0;
+                do
+                {
+                        cout << endl << "Podaj zeton gracza2: ";
+                        cin >> ZnakGracz2;
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        if (ZnakGracz1 == ZnakGracz2) cout << "Zetony nie moga byc takie same.";
+                        else buf = 1;
+                } while (buf == 0);
+        }
+        else
+        {
+                Nick1 = "Komputer";
+                ZnakGracz1 = 'x';
+                cout << endl << "Podaj nick gracza: ";
+                cin >> Nick2;
+                cin.ignore(cin.rdbuf()->in_avail());
+                int buf = 0;
+                do
+                {
+                        cout << endl << "Podaj zeton gracza rozny od 'x': ";
+                        cin >> ZnakGracz2;
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        if (ZnakGracz1 == ZnakGracz2) cout << "Zeton musi byc rozny od 'x'.";                                  //komputer na przydzielony defaultowo 'x', ktory mozna mu zmienic w opcjach
+                        else buf = 1;
+                } while (buf == 0);
+        }
+
+        Wypisz(tabQ, tabW, tabA, tabS, Nick1, ZnakGracz1, LimitCzasu);
+
+        int KtoryRuch = 0;
+        bool czywygrana = false;
+        bool CzyPredefiniowanaPlansza = false;
+        bool CzyRemisPredef = false;
+
+        while (!czywygrana && KtoryRuch < 4 * WYMIAR * WYMIAR && !CzyRemisPredef)
+        {
+                CzasPauzy = 0;
+                if (KtoryRuch % 2 == 0)
+                {
+                        ZnakObecny = ZnakGracz1;
+                        NickObecny = Nick1;
+                        if (CzasGracz2 >= LimitCzasu)
+                        {
+                                WypiszWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1, true, false, Nick1);
+                                Przeglad(tabQ, tabW, tabA, tabS, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch, ZnakGracz1, ZnakGracz2, Nick1, Nick2, false);
+                                system("cls");
+                                return;
+                        }
+                }
+                if (KtoryRuch % 2 == 1)
+                {
+                        ZnakObecny = ZnakGracz2;
+                        NickObecny = Nick2;
+                        if (CzasGracz1 >= LimitCzasu)
+                        {
+                                WypiszWygrana(tabQ, tabW, tabA, tabS, ZnakGracz2, true, false, Nick2);
+                                Przeglad(tabQ, tabW, tabA, tabS, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch, ZnakGracz1, ZnakGracz2, Nick1, Nick2, false);
+                                system("cls");
+                                return;
+                        }
+                }
+                int BufRuchowy = KtoryRuch;
+                auto Poczatek = chrono::steady_clock::now();
+                if (!CzyBot)
+                {
+                        if (KtoryRuch % 2 == 0) WpiszRuch(tabQ, tabW, tabA, tabS, ZnakObecny, ZnakGracz1, ZnakGracz2, CzasPauzy, KtoryRuch, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, NickObecny, LimitCzasu - CzasGracz1, CzyPredefiniowanaPlansza);
+                        else WpiszRuch(tabQ, tabW, tabA, tabS, ZnakObecny, ZnakGracz1, ZnakGracz2, CzasPauzy, KtoryRuch, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, NickObecny, LimitCzasu - CzasGracz2, CzyPredefiniowanaPlansza);
+                        if (BufRuchowy == KtoryRuch) WybierzObrot(tabQ, tabW, tabA, tabS, HistoriaObrotow, KtoryRuch);                                                     //Sprawdza czy nie zostalo wykonane cofniecie ruchu w trakcie funkcji WpiszRuch()
+                                                                                                                                                                                                                                                                                                                                // KtoryRuch przekazywany przez referencje do innych funkcji wiec moga go one zmieniac. Potem musimy sprawdzic czy obecny ruch to faktycznie ruch obecny czy moze zostalo wykonane cofniecie badz predefiniowana plansza
+                }
+                else
+                {
+                        if (KtoryRuch % 2 == 0) ZnajdzOptymalnaWartosc(tabQ, tabW, tabA, tabS, ZnakGracz1, ZnakGracz2, 0, false, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch, CzyPredefiniowanaPlansza);
+                        else WpiszRuch(tabQ, tabW, tabA, tabS, ZnakObecny, ZnakGracz1, ZnakGracz2, CzasPauzy, KtoryRuch, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, NickObecny, LimitCzasu - CzasGracz2, CzyPredefiniowanaPlansza);
+                        if (BufRuchowy == KtoryRuch && KtoryRuch % 2 == 1) WybierzObrot(tabQ, tabW, tabA, tabS, HistoriaObrotow, KtoryRuch);
+                }
+                auto Koniec = chrono::steady_clock::now();
+
+
+                if (BufRuchowy == KtoryRuch)                                                                                                                     //Jesli zostalo wykonane cofniecie to nie doliczy czasu (bo wina przeciwnika) i nie zaliczy tej akcji jako ruch
+                {
+                        if (KtoryRuch % 2 == 0) CzasGracz1 += chrono::duration_cast<chrono::seconds>(Koniec - Poczatek).count() - CzasPauzy;
+                        else CzasGracz2 += chrono::duration_cast<chrono::seconds>(Koniec - Poczatek).count() - CzasPauzy;
+                        if (SprawdzWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1) != 0) czywygrana = true;
+                        KtoryRuch++;
+                }
+
+                if (KtoryRuch % 2 == 0) Wypisz(tabQ, tabW, tabA, tabS, Nick1, ZnakGracz1, LimitCzasu - CzasGracz1);
+                else Wypisz(tabQ, tabW, tabA, tabS, Nick2, ZnakGracz2, LimitCzasu - CzasGracz2);
+                CzyRemisPredef = CzyPredefiniowanaPlansza && KtoryRuch >= 20;
+
+        }
+        if (SprawdzWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1) == 1) WypiszWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1, false, false, Nick1);
+        else if (SprawdzWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1) == -1) WypiszWygrana(tabQ, tabW, tabA, tabS, ZnakGracz2, false, false, Nick2);
+        else if (KtoryRuch == 4 * WYMIAR * WYMIAR || CzyRemisPredef) WypiszWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1, false, true, Nick1);                      //sprawdzenie remisu
+
+        Przeglad(tabQ, tabW, tabA, tabS, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch, ZnakGracz1, ZnakGracz2, Nick1, Nick2, false);
+        system("cls");
+        return;
+}
+
+void KoloKrzyz(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], bool CzyBot)
+{
+        Zeruj(tabQ, tabW, tabA, tabS);
+        string Nick1, Nick2, NickObecny;
+        char ZnakGracz1, ZnakGracz2, ZnakObecny, HistoriaPlansz[4 * WYMIAR * WYMIAR], HistoriaObrotow[8 * WYMIAR * WYMIAR];
+        int CzasGracz1 = 0, CzasGracz2 = 0, LimitCzasu, CzasPauzy = 0, HistoriaWpisan[4 * WYMIAR * WYMIAR];
+
+        cout << endl << "Podaj limit czasowy w sekundach: ";
+        while (!(cin >> LimitCzasu) || LimitCzasu <= 0)
+        {
+                cout << "Blednie wprowadzony limit czasowy. Podaj limit czasowy ponownie: " << endl;
+                cin.clear();
+                cin.ignore(cin.rdbuf()->in_avail());
+        }
+        cin.ignore(cin.rdbuf()->in_avail());
+
+        if (!CzyBot)
+        {
+                cout << endl << "Podaj nick gracza1: ";
+                cin >> Nick1;
+                cout << endl << "Podaj nick gracza2: ";
+                cin >> Nick2;
+                cout << endl << "Podaj zeton gracza1: ";
+                cin >> ZnakGracz1;
+                cin.ignore(cin.rdbuf()->in_avail());
+                int buf = 0;
+                do
+                {
+                        cout << endl << "Podaj zeton gracza2: ";
+                        cin >> ZnakGracz2;
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        if (ZnakGracz1 == ZnakGracz2) cout << "Zetony nie moga byc takie same.";
+                        else buf = 1;
+                } while (buf == 0);
+        }
+        else
+        {
+                Nick1 = "Komputer";
+                ZnakGracz1 = 'x';
+                cout << endl << "Podaj nick gracza: ";
+                cin >> Nick2;
+                cin.ignore(cin.rdbuf()->in_avail());
+                int buf = 0;
+                do
+                {
+                        cout << endl << "Podaj zeton gracza rozny od 'x': ";
+                        cin >> ZnakGracz2;
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        if (ZnakGracz1 == ZnakGracz2) cout << "Zeton musi byc rozny od 'x'.";
+                        else buf = 1;
+                } while (buf == 0);
+        }
+
+
+
+        Wypisz(tabQ, tabW, tabA, tabS, Nick1, ZnakGracz1, LimitCzasu);
+
+        int KtoryRuch = 0;
+        bool czywygrana = false;
+        bool CzyPredefiniowanaPlansza = false;
+        bool CzyRemisPredef = false;
+
+        while (!czywygrana && KtoryRuch < 4 * WYMIAR * WYMIAR && !CzyRemisPredef)
+        {
+                CzasPauzy = 0;
+                if (KtoryRuch % 2 == 0)
+                {
+                        ZnakObecny = ZnakGracz1;
+                        NickObecny = Nick1;
+                        if (CzasGracz2 >= LimitCzasu)
+                        {
+                                WypiszWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1, true, false, Nick1);
+                                Przeglad(tabQ, tabW, tabA, tabS, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch, ZnakGracz1, ZnakGracz2, Nick1, Nick2, true);
+                                system("cls");
+                                return;
+                        }
+                }
+                if (KtoryRuch % 2 == 1)
+                {
+                        ZnakObecny = ZnakGracz2;
+                        NickObecny = Nick2;
+                        if (CzasGracz1 >= LimitCzasu)
+                        {
+                                WypiszWygrana(tabQ, tabW, tabA, tabS, ZnakGracz2, true, false, Nick2);
+                                Przeglad(tabQ, tabW, tabA, tabS, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch, ZnakGracz1, ZnakGracz2, Nick1, Nick2, true);
+                                system("cls");
+                                return;
+                        }
+                }
+                int BufRuchowy = KtoryRuch;
+                auto Poczatek = chrono::steady_clock::now();
+                if (!CzyBot)
+                {
+                        if (KtoryRuch % 2 == 0) WpiszRuch(tabQ, tabW, tabA, tabS, ZnakObecny, ZnakGracz1, ZnakGracz2, CzasPauzy, KtoryRuch, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, NickObecny, LimitCzasu - CzasGracz1, CzyPredefiniowanaPlansza);
+                        else WpiszRuch(tabQ, tabW, tabA, tabS, ZnakObecny, ZnakGracz1, ZnakGracz2, CzasPauzy, KtoryRuch, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, NickObecny, LimitCzasu - CzasGracz2, CzyPredefiniowanaPlansza);
+                }
+                else
+                {
+                        if (KtoryRuch % 2 == 0) ZnajdzOptymalnaWartosc(tabQ, tabW, tabA, tabS, ZnakGracz1, ZnakGracz2, 7, true, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch, CzyPredefiniowanaPlansza);
+                        else WpiszRuch(tabQ, tabW, tabA, tabS, ZnakObecny, ZnakGracz1, ZnakGracz2, CzasPauzy, KtoryRuch, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, NickObecny, LimitCzasu - CzasGracz2, CzyPredefiniowanaPlansza);
+                }
+                auto Koniec = chrono::steady_clock::now();
+
+                if (BufRuchowy == KtoryRuch)                                                                                                                     //Jesli zostalo wykonane cofniecie to nie doliczy czasu (bo wina przeciwnika) i nie zaliczy tej akcji jako ruch
+                {
+                        if (KtoryRuch % 2 == 0) CzasGracz1 += chrono::duration_cast<chrono::seconds>(Koniec - Poczatek).count() - CzasPauzy;
+                        else CzasGracz2 += chrono::duration_cast<chrono::seconds>(Koniec - Poczatek).count() - CzasPauzy;
+                        if (SprawdzWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1) != 0) czywygrana = true;
+                        KtoryRuch++;
+                }
+
+                if (KtoryRuch % 2 == 0) Wypisz(tabQ, tabW, tabA, tabS, Nick1, ZnakGracz1, LimitCzasu - CzasGracz1);
+                else Wypisz(tabQ, tabW, tabA, tabS, Nick2, ZnakGracz2, LimitCzasu - CzasGracz2);
+                CzyRemisPredef = CzyPredefiniowanaPlansza && KtoryRuch >= 20;
+        }
+        if (SprawdzWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1) == 1) WypiszWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1, false, false, Nick1);
+        else if (SprawdzWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1) == -1) WypiszWygrana(tabQ, tabW, tabA, tabS, ZnakGracz2, false, false, Nick2);
+        else if (KtoryRuch == 4 * WYMIAR * WYMIAR || CzyRemisPredef) WypiszWygrana(tabQ, tabW, tabA, tabS, ZnakGracz1, false, true, Nick1);                      //sprawdzenie remisu
+
+        Przeglad(tabQ, tabW, tabA, tabS, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch, ZnakGracz1, ZnakGracz2, Nick1, Nick2, true);
+        system("cls");
+        return;
+}
+
+void Zeruj(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR])
+{
+        for (int k = 0; k < WYMIAR; k++)
+        {
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        tabQ[k][i] = ' ';
+                        tabW[k][i] = ' ';
+                        tabA[k][i] = ' ';
+                        tabS[k][i] = ' ';
+                }
+        }
+}
+
+void Wypisz(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], string NickGracza, char ZnakGracza, int IleCzasu)
+{
+        system("cls");
+        piszlinie(201, 187, 203, 187, 201);
+        for (int k = WYMIAR - 1; k >= 0; k--)
+        {
+                cout << setw(8) << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabQ[k][i] << ' ';
+                }
+                cout << (char)186 << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabW[k][i] << ' ';
+                }
+                if (k == 0)cout << (char)186 << setw(20) << ' ' << "Ruch " << NickGracza << " - " << ZnakGracza << endl;
+                else cout << (char)186 << endl;
+                if (k > 0)piszlinie(204, 185, 206, 185, 204);
+                else piszlinie(200, 188, 202, 188, 200);
+        }
+
+        piszlinie(201, 187, 203, 187, 201);
+
+        for (int k = WYMIAR - 1; k >= 0; k--)
+        {
+                cout << setw(8) << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabA[k][i] << ' ';
+                }
+                cout << (char)186 << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabS[k][i] << ' ';
+                }
+                if (k == 2)cout << (char)186 << setw(20) << ' ' << "Pozostaly czas: " << IleCzasu << " sekund. " << endl;
+                else cout << (char)186 << endl;
+                if (k > 0)piszlinie(204, 185, 206, 185, 204);
+                else piszlinie(200, 188, 202, 188, 200);
+        }
+        cout << endl << "q,w,a,s - wybor czesci planszy odpowiednio: lewej gornej, prawej gornej, lewej dolnej, prawej dolnej" << endl;
+        cout << "1..9 - wybor pola na czesci planszy jak na klawiaturze numerycznej tj. 1 to dolne lewe pole" << endl;
+        cout << "z, x - Obrot odpowiednio : zgodnie z ruchem wskazowek zegara, odwrotnie do ruchu wskazowek" << endl;
+        cout << "p - pauza" << endl;
+        cout << "u - undo" << endl;
+        cout << "o - wczytanie predefiniowanej planszy" << endl;
+        cout << "m - wejscie do opcji" << endl;
+        cout << "h - wejscie do opisu programu" << endl;
+        cout << "e - pomoc" << endl;
+}
+
+void piszlinie(char znaklewo, char znakprawo, char znakprzemienny, char znaksrodeklewo, char znaksrodekprawo)
+{
+        cout << setw(8) << ' ' << znaklewo;
+        for (int i = 0; i < 4 * WYMIAR - 1; i++)
+                if ((i + 1) % 4 != 0) cout << (char)205;                                  //modulo 4 bo znak z dwoma spacjami (3 znaki) uznajemy jako jedno pole
+                else cout << znakprzemienny;
+
+        cout << znaksrodeklewo;
+        cout << ' ';
+        cout << znaksrodekprawo;
+
+        for (int i = 2; i < 4 * WYMIAR + 1; i++)
+                if ((i - 1) % 4 != 0) cout << (char)205;
+                else cout << znakprzemienny;
+
+        cout << znakprawo;
+        cout << endl;
+}
+
+void WypiszPrzeglad(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], string NickGracza, char ZnakGracza, char Wpisanie, int Miejsce, char Obrot, char StronaObrotu, bool CzyKoloKrzyz, bool CzyKoncowyRuch)
+{
+        system("cls");
+        cout << endl << setw(30) << "Analiza partii" << endl << endl;
+        piszlinie(201, 187, 203, 187, 201);
+        for (int k = WYMIAR - 1; k >= 0; k--)
+        {
+                cout << setw(8) << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabQ[k][i] << ' ';
+                }
+                cout << (char)186 << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabW[k][i] << ' ';
+                }
+                if (k == 0)
+                {
+                        if (!CzyKoncowyRuch)
+                                cout << (char)186 << setw(20) << ' ' << "Nastepny ruch: " << NickGracza << " - " << ZnakGracza << endl;
+                        else
+                                cout << (char)186 << endl;
+                }
+                else cout << (char)186 << endl;
+                if (k > 0)piszlinie(204, 185, 206, 185, 204);
+                else piszlinie(200, 188, 202, 188, 200);
+        }
+
+        piszlinie(201, 187, 203, 187, 201);
+
+        for (int k = WYMIAR - 1; k >= 0; k--)
+        {
+                cout << setw(8) << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabA[k][i] << ' ';
+                }
+                cout << (char)186 << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabS[k][i] << ' ';
+                }
+                if (k == 2)
+                {
+                        cout << (char)186;
+                        if (!CzyKoncowyRuch)
+                        {
+                                cout << setw(20) << ' ' << "Ruch: " << Wpisanie << ' ' << Miejsce;
+                                if (!CzyKoloKrzyz) cout << ", obrot: " << Obrot << ' ' << StronaObrotu;
+                        }
+                        cout << endl;
+                }
+                else cout << (char)186 << endl;
+                if (k > 0)piszlinie(204, 185, 206, 185, 204);
+                else piszlinie(200, 188, 202, 188, 200);
+        }
+        cout << endl << "Ruch do tylu - t" << endl << "Ruch do przodu - y" << endl << "Wyjscie - e" << endl;
+}
+
+void WypiszWygrana(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakWygrany, bool CzyKoniecCzasu, bool CzyRemis, string Zwyciezca)
+{
+        system("cls");
+        if (CzyKoniecCzasu) cout << endl << setw(28) << "Koniec czasu!" << endl;
+        if (CzyRemis) cout << endl << setw(28) << "Remis!" << endl << endl;
+        if (!CzyRemis) cout << endl << setw(25) << "Wygrywa: " << Zwyciezca << " - " << ZnakWygrany << endl << endl;
+
+        piszlinie(201, 187, 203, 187, 201);
+        for (int k = WYMIAR - 1; k >= 0; k--)
+        {
+                cout << setw(8) << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabQ[k][i] << ' ';
+                }
+                cout << (char)186 << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabW[k][i] << ' ';
+                }
+                cout << (char)186 << endl;
+                if (k > 0)piszlinie(204, 185, 206, 185, 204);
+                else piszlinie(200, 188, 202, 188, 200);
+        }
+
+        piszlinie(201, 187, 203, 187, 201);
+
+        for (int k = WYMIAR - 1; k >= 0; k--)
+        {
+                cout << setw(8) << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabA[k][i] << ' ';
+                }
+                cout << (char)186 << ' ';
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        cout << (char)186;
+                        cout << ' ' << tabS[k][i] << ' ';
+                }
+                cout << (char)186 << endl;
+                if (k > 0)piszlinie(204, 185, 206, 185, 204);
+                else piszlinie(200, 188, 202, 188, 200);
+        }
+        system("pause");
+}
+
+int WpiszZnakDoTablicy(char tab[WYMIAR][WYMIAR], char znak, int pole)
+{
+        if (tab[pole / WYMIAR][pole % WYMIAR - 1] == ' ')
+        {
+                tab[pole / WYMIAR][pole % WYMIAR - 1] = znak;
+                return 1;
+        }
+        else return 0;
+}
+
+void WpiszRuch(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakObecny, char& ZnakGracz1, char& ZnakGracz2, int& CzasPauzy, int& KtoryRuch, char HistoriaPlansz[4 * WYMIAR * WYMIAR], int HistoriaWpisan[4 * WYMIAR * WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], string NickObecny, int IleCzasu, bool& CzyPredefiniowanaPlansza)
+{
+        char KtoraTab;
+        int pole;
+        int ZwracanaWartosc = 0;                                                                //zmienia wartosc na 1 po wpisaniu znaku do tablicy
+        cout << endl << "Podaj tablice do wpisania znaku lub akcje do wykonania: ";
+        while (ZwracanaWartosc == 0) {
+                while (!(cin >> KtoraTab))
+                {
+                        cout << "Blednie wprowadzone pole. Podaj pole ponownie: " << endl;
+                        cin.clear();
+                        cin.ignore(cin.rdbuf()->in_avail());
+                }
+                cin.ignore(cin.rdbuf()->in_avail());
+                switch (KtoraTab)
+                {
+                case 'q':
+                        cout << endl << "Podaj pole do wpisania znaku w podanej tablicy: ";
+                        while (!(cin >> pole) || pole <= 0 || pole > WYMIAR * WYMIAR)
+                        {
+                                cout << "Blednie wprowadzone pole. Podaj pole ponownie: " << endl;
+                                cin.clear();
+                                cin.ignore(cin.rdbuf()->in_avail());
+                        }
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        HistoriaPlansz[KtoryRuch] = KtoraTab;
+                        HistoriaWpisan[KtoryRuch] = pole;
+                        ZwracanaWartosc = WpiszZnakDoTablicy(tabQ, ZnakObecny, pole); break;
+                case 'w':
+                        cout << endl << "Podaj pole do wpisania znaku w podanej tablicy: ";
+                        while (!(cin >> pole) || pole <= 0 || pole > WYMIAR * WYMIAR)
+                        {
+                                cout << "Blednie wprowadzone pole. Podaj pole ponownie: " << endl;
+                                cin.clear();
+                                cin.ignore(cin.rdbuf()->in_avail());
+                        }
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        HistoriaPlansz[KtoryRuch] = KtoraTab;
+                        HistoriaWpisan[KtoryRuch] = pole;
+                        ZwracanaWartosc = WpiszZnakDoTablicy(tabW, ZnakObecny, pole); break;
+                case 'a':
+                        cout << endl << "Podaj pole do wpisania znaku w podanej tablicy: ";
+                        while (!(cin >> pole) || pole <= 0 || pole > WYMIAR * WYMIAR)
+                        {
+                                cout << "Blednie wprowadzone pole. Podaj pole ponownie: " << endl;
+                                cin.clear();
+                                cin.ignore(cin.rdbuf()->in_avail());
+                        }
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        HistoriaPlansz[KtoryRuch] = KtoraTab;
+                        HistoriaWpisan[KtoryRuch] = pole;
+                        ZwracanaWartosc = WpiszZnakDoTablicy(tabA, ZnakObecny, pole); break;
+                case 's':
+                        cout << endl << "Podaj pole do wpisania znaku w podanej tablicy: ";
+                        while (!(cin >> pole) || pole <= 0 || pole > WYMIAR * WYMIAR)
+                        {
+                                cout << "Blednie wprowadzone pole. Podaj pole ponownie: " << endl;
+                                cin.clear();
+                                cin.ignore(cin.rdbuf()->in_avail());
+                        }
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        HistoriaPlansz[KtoryRuch] = KtoraTab;
+                        HistoriaWpisan[KtoryRuch] = pole;
+                        ZwracanaWartosc = WpiszZnakDoTablicy(tabS, ZnakObecny, pole); break;
+                case 'p': Pauza(CzasPauzy);  break;
+                case 'u':
+                        if (KtoryRuch > 0)
+                        {
+                                Undo(tabQ, tabW, tabA, tabS, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch);
+                                return;
+                        }
+                        else cout << endl << "Brak ruchow do cofniecia. " << endl << endl;
+                        system("pause");
+                        break;
+                case 'o':
+                        PredefiniowanaPlansza(tabQ, tabW, tabA, tabS, ZnakGracz1, ZnakGracz2);
+                        CzyPredefiniowanaPlansza = true;
+                        if (KtoryRuch % 2 == 1)
+                        {
+                                KtoryRuch = 0;                                                    // przy wczytaniu predefiniowanej planszy jesli jest ruch gracza2 to zeruje ruch i returnuje funkcje zeby byl ruch gracza1
+                                return;
+                        }
+                        else KtoryRuch = 0;                                                   //jak jest ruch gracza1 to po prostu zeruje ruch
+                        break;
+                case 'm': Opcje(tabQ, tabW, tabA, tabS, ZnakObecny, ZnakGracz1, ZnakGracz2);  break;
+                case 'h': OpisProgramu();  break;
+                case 'e': Pomoc();  break;
+                }
+                Wypisz(tabQ, tabW, tabA, tabS, NickObecny, ZnakObecny, IleCzasu);
+                if (ZwracanaWartosc == 0) cout << endl << "Podaj tablice do wpisania znaku lub akcje do wykonania: ";
+        }
+}
+
+void WybierzObrot(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], int KtoryRuch)
+{
+        char wKtoraStrone, KtoraTab;
+
+        cout << "Wybierz tablice do obrotu: ";
+        while (!(cin >> KtoraTab) || (KtoraTab != 'q' && KtoraTab != 'w' && KtoraTab != 'a' && KtoraTab != 's'))
+        {
+                cout << "Blednie wprowadzona tablica. Podaj tablice ponownie: " << endl;
+                cin.clear();
+                cin.ignore(cin.rdbuf()->in_avail());
+        }
+        cin.ignore(cin.rdbuf()->in_avail());
+        HistoriaObrotow[2 * KtoryRuch] = KtoraTab;                                                   //wpisuje w parzyste pole tablice, w nieparzyste w ktora strone wykonany zostal obrot
+
+        cout << "Wybierz w ktora strone obrocic wybrana tablice: ";
+        while (!(cin >> wKtoraStrone) || (wKtoraStrone != 'z' && wKtoraStrone != 'x'))
+        {
+                cout << "Blednie wprowadzony obrot. Podaj obrot z lub x: " << endl;
+                cin.clear();
+                cin.ignore(cin.rdbuf()->in_avail());
+        }
+        cin.ignore(cin.rdbuf()->in_avail());
+        HistoriaObrotow[2 * KtoryRuch + 1] = wKtoraStrone;
+
+        switch (KtoraTab)
+        {
+        case 'q': Obroc(tabQ, wKtoraStrone); break;
+        case 'w': Obroc(tabW, wKtoraStrone); break;
+        case 'a': Obroc(tabA, wKtoraStrone); break;
+        case 's': Obroc(tabS, wKtoraStrone); break;
+        }
+}
+
+void Obroc(char tab[WYMIAR][WYMIAR], char wKtoraStrone)
+{
+        char buf;
+        buf = tab[0][0];
+        if (wKtoraStrone == 'x')
+        {
+                tab[0][0] = tab[WYMIAR - 1][0];                                                   //obraca rogi
+                tab[WYMIAR - 1][0] = tab[WYMIAR - 1][WYMIAR - 1];
+                tab[WYMIAR - 1][WYMIAR - 1] = tab[0][WYMIAR - 1];
+                tab[0][WYMIAR - 1] = buf;
+                buf = tab[0][WYMIAR - 2];                                                   //obraca wnetrze
+                tab[0][WYMIAR - 2] = tab[WYMIAR - 2][0];
+                tab[WYMIAR - 2][0] = tab[WYMIAR - 1][WYMIAR - 2];
+                tab[WYMIAR - 1][WYMIAR - 2] = tab[WYMIAR - 2][WYMIAR - 1];
+                tab[WYMIAR - 2][WYMIAR - 1] = buf;
+        }
+        else if (wKtoraStrone == 'z')
+        {
+                tab[0][0] = tab[0][WYMIAR - 1];                                                   //obraca rogi
+                tab[0][WYMIAR - 1] = tab[WYMIAR - 1][WYMIAR - 1];
+                tab[WYMIAR - 1][WYMIAR - 1] = tab[WYMIAR - 1][0];
+                tab[WYMIAR - 1][0] = buf;
+                buf = tab[0][WYMIAR - 2];                                                   //obraca wnetrze
+                tab[0][WYMIAR - 2] = tab[WYMIAR - 2][WYMIAR - 1];
+                tab[WYMIAR - 2][WYMIAR - 1] = tab[WYMIAR - 1][WYMIAR - 2];
+                tab[WYMIAR - 1][WYMIAR - 2] = tab[WYMIAR - 2][0];
+                tab[WYMIAR - 2][0] = buf;
+        }
+}
+
+int SprawdzWygrana(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakGracz1)
+{
+        char ZnakWygrany;
+        if (SprawdzWPoziomie(tabQ, tabW, ZnakWygrany) || SprawdzWPoziomie(tabA, tabS, ZnakWygrany))
+        {
+                if (ZnakWygrany == ZnakGracz1)
+                        return 1;
+                else return -1;
+        }
+        if (SprawdzWPionie(tabQ, tabA, ZnakWygrany) || SprawdzWPionie(tabW, tabS, ZnakWygrany))
+        {
+                if (ZnakWygrany == ZnakGracz1)
+                        return 1;
+                else return -1;
+        }
+        if (SprawdzUkos(tabQ, tabW, tabA, tabS, ZnakWygrany))
+        {
+                if (ZnakWygrany == ZnakGracz1)
+                        return 1;
+                else return -1;
+        }
+        return 0;
+}
+
+bool SprawdzWPoziomie(char tab1[WYMIAR][WYMIAR], char tab2[WYMIAR][WYMIAR], char& ZnakWygrany)
+{
+        char PotZwyciezca;
+        for (int i = 0; i < WYMIAR; i++)                                                   //sprawdza srodki rzedu, potem pola wewnetrze w rzedzie, a na koniec czy w jednym z pol zewnetrzych jest sprawdzany znak
+                if (tab1[i][WYMIAR - 2] == tab2[i][1] && tab2[i][1] != ' ')
+                {
+                        PotZwyciezca = tab2[i][1];
+                        if (tab1[i][WYMIAR - 1] == tab2[i][0] && tab2[i][0] == PotZwyciezca)
+                                if (PotZwyciezca == tab1[i][0] || PotZwyciezca == tab2[i][WYMIAR - 1])
+                                {
+                                        ZnakWygrany = PotZwyciezca;
+                                        return true;
+                                }
+                }
+        return false;
+}
+
+bool SprawdzWPionie(char tab1[WYMIAR][WYMIAR], char tab2[WYMIAR][WYMIAR], char& ZnakWygrany)          //analogicznie jak dla rzedow, lecz pionowo
+{
+        char PotZwyciezca;
+        for (int i = 0; i < WYMIAR; i++)
+                if (tab1[WYMIAR - 2][i] == tab2[1][i] && tab2[1][i] != ' ')
+                {
+                        PotZwyciezca = tab2[1][i];
+                        if (tab1[0][i] == tab2[WYMIAR - 1][i] && tab2[WYMIAR - 1][i] == PotZwyciezca)
+                                if (PotZwyciezca == tab1[WYMIAR - 1][i] || PotZwyciezca == tab2[0][i])
+                                {
+                                        ZnakWygrany = PotZwyciezca;
+                                        return true;
+                                }
+                }
+        return false;
+}
+
+bool SprawdzUkos(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char& ZnakWygrany)
+{
+        char PotZwyciezca;                                                                                                                                                                                                                                                                                        //analogicznie jak dla pionu i poziomu na glownych przekatnych; Na przekatnych mniejszych sprawdza wszystkie pola
+        if (tabQ[WYMIAR - 2][WYMIAR - 2] == tabS[WYMIAR - 2][WYMIAR - 2] && tabS[WYMIAR - 2][WYMIAR - 2] != ' ')                                                      //sprawdza glowna przekatna qs
+        {
+                PotZwyciezca = tabS[WYMIAR - 2][WYMIAR - 2];
+                if (tabQ[WYMIAR - 3][WYMIAR - 1] == tabS[WYMIAR - 1][WYMIAR - 3] && tabS[WYMIAR - 1][WYMIAR - 3] == PotZwyciezca)
+                        if (PotZwyciezca == tabQ[WYMIAR - 1][WYMIAR - 3] || PotZwyciezca == tabS[WYMIAR - 3][WYMIAR - 1])
+                        {
+                                ZnakWygrany = PotZwyciezca;
+                                return true;
+                        }
+        }
+
+        if (tabA[WYMIAR - 2][WYMIAR - 2] == tabW[WYMIAR - 2][WYMIAR - 2] && tabW[WYMIAR - 2][WYMIAR - 2] != ' ')                                                         //sprawdza glowna przekatna wa
+        {
+                PotZwyciezca = tabW[WYMIAR - 2][WYMIAR - 2];
+                if (tabA[WYMIAR - 1][WYMIAR - 1] == tabW[WYMIAR - 3][WYMIAR - 3] && tabW[WYMIAR - 3][WYMIAR - 3] == PotZwyciezca)
+                        if (PotZwyciezca == tabA[WYMIAR - 3][WYMIAR - 3] || PotZwyciezca == tabW[WYMIAR - 1][WYMIAR - 1])
+                        {
+                                ZnakWygrany = PotZwyciezca;
+                                return true;
+                        }
+        }
+
+        if (tabA[WYMIAR - 2][WYMIAR - 1] == tabW[WYMIAR - 2][WYMIAR - 1] && tabW[WYMIAR - 2][WYMIAR - 1] != ' ')                                                         //sprawdza mniejsze przekatne wa
+        {
+                PotZwyciezca = tabW[WYMIAR - 2][WYMIAR - 1];
+                if (tabA[WYMIAR - 3][WYMIAR - 2] == tabW[WYMIAR - 3][WYMIAR - 2] && tabW[WYMIAR - 3][WYMIAR - 2] == PotZwyciezca)
+                        if (PotZwyciezca == tabS[WYMIAR - 1][WYMIAR - 3])
+                        {
+                                ZnakWygrany = PotZwyciezca;
+                                return true;
+                        }
+        }
+        if (tabA[WYMIAR - 2][WYMIAR - 3] == tabW[WYMIAR - 2][WYMIAR - 3] && tabW[WYMIAR - 2][WYMIAR - 3] != ' ')
+        {
+                PotZwyciezca = tabW[WYMIAR - 2][WYMIAR - 3];
+                if (tabA[WYMIAR - 1][WYMIAR - 2] == tabW[WYMIAR - 1][WYMIAR - 2] && tabW[WYMIAR - 1][WYMIAR - 2] == PotZwyciezca)
+                        if (PotZwyciezca == tabQ[WYMIAR - 3][WYMIAR - 1])
+                        {
+                                ZnakWygrany = PotZwyciezca;
+                                return true;
+                        }
+        }
+
+        if (tabQ[WYMIAR - 2][WYMIAR - 3] == tabS[WYMIAR - 2][WYMIAR - 3] && tabS[WYMIAR - 2][WYMIAR - 3] != ' ')                                                         //sprawdza mniejsze przekatne qs
+        {
+                PotZwyciezca = tabS[WYMIAR - 2][WYMIAR - 3];
+                if (tabQ[WYMIAR - 3][WYMIAR - 2] == tabS[WYMIAR - 3][WYMIAR - 2] && tabS[WYMIAR - 3][WYMIAR - 2] == PotZwyciezca)
+                        if (PotZwyciezca == tabA[WYMIAR - 1][WYMIAR - 1])
+                        {
+                                ZnakWygrany = PotZwyciezca;
+                                return true;
+                        }
+        }
+        if (tabQ[WYMIAR - 1][WYMIAR - 2] == tabS[WYMIAR - 1][WYMIAR - 2] && tabS[WYMIAR - 1][WYMIAR - 2] != ' ')
+        {
+                PotZwyciezca = tabS[WYMIAR - 1][WYMIAR - 2];
+                if (tabQ[WYMIAR - 2][WYMIAR - 1] == tabS[WYMIAR - 2][WYMIAR - 1] && tabS[WYMIAR - 2][WYMIAR - 1] == PotZwyciezca)
+                        if (PotZwyciezca == tabW[WYMIAR - 3][WYMIAR - 3])
+                        {
+                                ZnakWygrany = PotZwyciezca;
+                                return true;
+                        }
+        }
+        return false;
+}
+
+void ZmienZeton(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char& ZnakObecny, char& ZnakGracz1, char ZnakGracz2)   //w tym przypadku znakgracz1 to znak gracza, ktorego zeton ma byc zmieniany (niekoniecznie faktycznego gracza1)
+{
+        char ZnakNowy;
+        cout << endl << "Podaj nowy zeton:" << endl;
+        cin >> ZnakNowy;
+        cin.ignore(cin.rdbuf()->in_avail());
+        if (ZnakNowy != ZnakGracz2)
+        {
+                for (int k = 0; k < WYMIAR; k++)
+                {
+                        for (int i = 0; i < WYMIAR; i++)
+                        {
+                                if (tabQ[k][i] == ZnakGracz1) tabQ[k][i] = ZnakNowy;
+                                if (tabW[k][i] == ZnakGracz1) tabW[k][i] = ZnakNowy;
+                                if (tabA[k][i] == ZnakGracz1) tabA[k][i] = ZnakNowy;
+                                if (tabS[k][i] == ZnakGracz1) tabS[k][i] = ZnakNowy;
+                        }
+                }
+                if (ZnakGracz1 == ZnakObecny) ZnakObecny = ZnakNowy;
+                ZnakGracz1 = ZnakNowy;
+                cout << endl << "Zmieniono zeton" << endl;
+        }
+        else cout << endl << "Nie mozna podac zetonu przeciwnika" << endl;
+        system("pause");
+        return;
+}
+
+void Pomoc()
+{
+        system("cls");
+        cout << endl << setw(10) << ' ' << "Komendy dzialajace w trakcie gry (przy aktywnej planszy): " << endl << endl;
+        cout << "q,w,a,s - wybor czesci planszy odpowiednio: lewej gornej, prawej gornej, lewej dolnej, prawej dolnej" << endl;
+        cout << "1..9 - wybor pola na czesci planszy jak na klawiaturze numerycznej tj. 1 to dolne lewe pole" << endl;
+        cout << "z, x - obrot odpowiednio : zgodnie z ruchem wskazowek zegara, odwrotnie do ruchu wskazowek" << endl;
+        cout << "p - pauza" << endl;
+        cout << "u - undo" << endl;
+        cout << "o - wczytanie predefiniowanej planszy" << endl;
+        cout << "m - wejscie do opcji" << endl;
+        cout << "h - wejscie do opisu programu" << endl << endl;
+        cout << "e - wyjscie z pomocy" << endl;
+        char wyjscie;
+        while (cin >> wyjscie)
+                if (wyjscie == 'e')
+                {
+                        system("cls");
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        return;
+                }
+}
+
+void PredefiniowanaPlansza(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakGracz1, char ZnakGracz2)
+{
+        char tab1[3][3] = { {' ',ZnakGracz1,' '}, {ZnakGracz1,ZnakGracz1,ZnakGracz2}, {' ',ZnakGracz2,' '} };
+        char tab2[3][3] = { {' ',' ',' '}, {ZnakGracz1,ZnakGracz2,' '}, {' ',ZnakGracz1,' '} };
+        char tab3[3][3] = { {' ',ZnakGracz2,' '}, {ZnakGracz2,' ',ZnakGracz1}, {ZnakGracz1,ZnakGracz1,' '} };
+        char tab4[3][3] = { {' ',ZnakGracz2,ZnakGracz2}, {' ',ZnakGracz2,' '}, {' ',' ',' '} };
+        for (int k = 0; k < WYMIAR; k++)
+        {
+                for (int i = 0; i < WYMIAR; i++)
+                {
+                        tabQ[k][i] = tab1[k][i];
+                        tabW[k][i] = tab2[k][i];
+                        tabA[k][i] = tab3[k][i];
+                        tabS[k][i] = tab4[k][i];
+                }
+        }
+}
+
+void Pauza(int& CzasPauzy)
+{
+        auto Poczatek = chrono::steady_clock::now();                                                   //liczy czas pauzy i go zmienia w zaleznosci od dlugosci trwania pauzy
+        system("cls");
+        cout << endl << endl << setw(37) << "Pauza" << endl << endl;
+        system("pause");
+        auto Koniec = chrono::steady_clock::now();
+        CzasPauzy += chrono::duration_cast<chrono::seconds>(Koniec - Poczatek).count();
+        system("cls");
+        return;
+}
+
+void Opcje(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char& ZnakObecny, char& ZnakGracz1, char& ZnakGracz2)
+{
+        system("cls");
+        char JakaAkcja;
+        cout << endl << endl << setw(37) << "Opcje" << endl;
+        cout << setw(5) << "Zmiana zetonu gracza 1 - c" << endl;
+        cout << setw(5) << "Zmiana zetonu gracza 2 - v" << endl;
+        cout << setw(5) << "Wyjscie z opcji - m" << endl;
+        while (cin >> JakaAkcja)
+        {
+                cin.ignore(cin.rdbuf()->in_avail());
+                switch (JakaAkcja)
+                {
+                case 'c':
+                        ZmienZeton(tabQ, tabW, tabA, tabS, ZnakObecny, ZnakGracz1, ZnakGracz2);                                    //raz gracz1 jest przekazywany z referencja raz gracz2 w zaleznosci, ktory zeton chcemy zmienic (komentarz w funkcji ZmienZeton())
+                        system("cls");
+                        break;
+                case 'v':
+                        ZmienZeton(tabQ, tabW, tabA, tabS, ZnakObecny, ZnakGracz2, ZnakGracz1);
+                        system("cls");
+                        break;
+                case 'm':
+                        system("cls");
+                        return;
+                default:
+                        system("cls");
+                }
+                cout << endl << endl << setw(37) << "Opcje" << endl;
+                cout << setw(5) << "Zmiana zetonu gracza 1 - c" << endl;
+                cout << setw(5) << "Zmiana zetonu gracza 2 - v" << endl;
+                cout << setw(5) << "Wyjscie z opcji- m" << endl;
+        }
+}
+
+void OpisProgramu()
+{
+        system("cls");
+        cout << endl;
+        cout << "Pentago to gra dwuosobowa na planszy. Plansza sklada sie z 4 ruchomych czesci, ktore mozna obracac." << endl;
+        cout << "Kazda czesc zawiera 9 miejsc na zetony." << endl;
+        cout << "Gracze po kolei oddaja ruch skladajacy sie z 2 czesci:" << endl;
+        cout << setw(5) << ' ' << "- dolozenia swojego zetonu na niezajete pole planszy;" << endl;
+        cout << setw(5) << ' ' << "- obrot jednej z czesci planszy o 90 stopni w dowolnym kierunku." << endl;
+        cout << "Nie mozna zrezygnowac z zadnej czesci ruchu." << endl;
+        cout << "Wygrywa osoba, ktorej 5 zetonow, po pelnym ruchu, sa ulozone w rzedzie / kolumnie / po skosach." << endl;
+        cout << endl;
+        cout << "W grze kolko i krzyzyk zasady sa analogiczne, z tym ze nie mozna dokonywac obrotow planszy." << endl;
+        cout << endl;
+        cout << endl << setw(10) << ' ' << "Komendy dzialajace w trakcie gry (przy aktywnej planszy): " << endl << endl;
+        cout << setw(5) << ' ' << "q,w,a,s - wybor czesci planszy odpowiednio: lewej gornej, prawej gornej, lewej dolnej, prawej dolnej" << endl;
+        cout << setw(5) << ' ' << "1..9 - wybor pola na czesci planszy jak na klawiaturze numerycznej tj. 1 to dolne lewe pole" << endl;
+        cout << setw(5) << ' ' << "z, x - obrot odpowiednio : zgodnie z ruchem wskazowek zegara, odwrotnie do ruchu wskazowek" << endl;
+        cout << setw(5) << ' ' << "p - pauza" << endl;
+        cout << setw(5) << ' ' << "u - undo" << endl;
+        cout << setw(5) << ' ' << "o - wczytanie predefiniowanej planszy" << endl;
+        cout << setw(5) << ' ' << "m - wejscie do opcji" << endl << endl;
+        cout << setw(5) << ' ' << "h - wyjscie z opisu programu" << endl;
+        char wyjscie;
+        while (cin >> wyjscie)
+                if (wyjscie == 'h')
+                {
+                        system("cls");
+                        cin.ignore(cin.rdbuf()->in_avail());
+                        return;
+                }
+}
+
+void Undo(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char HistoriaPlansz[4 * WYMIAR * WYMIAR], int HistoriaWpisan[4 * WYMIAR * WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], int& KtoryRuch)
+{
+        switch (HistoriaObrotow[(KtoryRuch - 1) * 2])                                                                                           //Jeden ruch w historii oborotow zajmuje dwa kolejne miejsca, a odejmujac 1 od zmiennej KtoryRuch zmieniamy ruch poprzedni
+        {                                                                                                                                                                                //W undo musimy najpierw wykonac obrot potem cofnac wpisanie (w funkcji wPrzod() odwrotnie)
+        case 'q':
+                if (HistoriaObrotow[2 * KtoryRuch - 1] == 'z') Obroc(tabQ, 'x');
+                else  Obroc(tabQ, 'z');
+                break;
+        case 'w':
+                if (HistoriaObrotow[2 * KtoryRuch - 1] == 'z') Obroc(tabW, 'x');
+                else  Obroc(tabW, 'z');
+                break;
+        case 'a':
+                if (HistoriaObrotow[2 * KtoryRuch - 1] == 'z') Obroc(tabA, 'x');
+                else  Obroc(tabA, 'z');
+                break;
+        case 's':
+                if (HistoriaObrotow[2 * KtoryRuch - 1] == 'z') Obroc(tabS, 'x');
+                else  Obroc(tabS, 'z');
+                break;
+        }
+
+        switch (HistoriaPlansz[KtoryRuch - 1])
+        {
+        case 'q':
+                tabQ[HistoriaWpisan[KtoryRuch - 1] / WYMIAR][HistoriaWpisan[KtoryRuch - 1] % WYMIAR - 1] = ' ';
+                break;
+        case 'w':
+                tabW[HistoriaWpisan[KtoryRuch - 1] / WYMIAR][HistoriaWpisan[KtoryRuch - 1] % WYMIAR - 1] = ' ';
+                break;
+        case 'a':
+                tabA[HistoriaWpisan[KtoryRuch - 1] / WYMIAR][HistoriaWpisan[KtoryRuch - 1] % WYMIAR - 1] = ' ';
+                break;
+        case 's':
+                tabS[HistoriaWpisan[KtoryRuch - 1] / WYMIAR][HistoriaWpisan[KtoryRuch - 1] % WYMIAR - 1] = ' ';
+                break;
+        }
+        KtoryRuch--;
+}
+
+void Przeglad(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char HistoriaPlansz[4 * WYMIAR * WYMIAR], int HistoriaWpisan[4 * WYMIAR * WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], int KtoryRuch, char ZnakGracz1, char ZnakGracz2, string Nick1, string Nick2, bool CzyKoloKrzyz)
+{
+        char wKtoraStrone;
+        int BufRuchowy = KtoryRuch;
+        while (true)
+        {
+                system("cls");
+                if (BufRuchowy == KtoryRuch)
+                {
+                        if (KtoryRuch % 2 == 0) WypiszPrzeglad(tabQ, tabW, tabA, tabS, Nick1, ZnakGracz1, HistoriaPlansz[KtoryRuch], HistoriaWpisan[KtoryRuch], HistoriaObrotow[2 * KtoryRuch], HistoriaObrotow[2 * KtoryRuch + 1], CzyKoloKrzyz, true);
+                        else WypiszPrzeglad(tabQ, tabW, tabA, tabS, Nick2, ZnakGracz2, HistoriaPlansz[KtoryRuch], HistoriaWpisan[KtoryRuch], HistoriaObrotow[2 * KtoryRuch], HistoriaObrotow[2 * KtoryRuch + 1], CzyKoloKrzyz, true);
+                }
+                else
+                {
+                        if (KtoryRuch % 2 == 0) WypiszPrzeglad(tabQ, tabW, tabA, tabS, Nick1, ZnakGracz1, HistoriaPlansz[KtoryRuch], HistoriaWpisan[KtoryRuch], HistoriaObrotow[2 * KtoryRuch], HistoriaObrotow[2 * KtoryRuch + 1], CzyKoloKrzyz, false);
+                        else WypiszPrzeglad(tabQ, tabW, tabA, tabS, Nick2, ZnakGracz2, HistoriaPlansz[KtoryRuch], HistoriaWpisan[KtoryRuch], HistoriaObrotow[2 * KtoryRuch], HistoriaObrotow[2 * KtoryRuch + 1], CzyKoloKrzyz, false);
+                }
+                cin >> wKtoraStrone;
+                cin.ignore(cin.rdbuf()->in_avail());
+                switch (wKtoraStrone)
+                {
+                case 't':
+                        if (KtoryRuch > 0) Undo(tabQ, tabW, tabA, tabS, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch);
+                        break;
+                case 'y':
+                        if (BufRuchowy > KtoryRuch) wPrzod(tabQ, tabW, tabA, tabS, HistoriaPlansz, HistoriaWpisan, HistoriaObrotow, KtoryRuch, ZnakGracz1, ZnakGracz2);
+                        break;
+                case 'e': return;
+                }
+        }
+}
+
+void wPrzod(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char HistoriaPlansz[4 * WYMIAR * WYMIAR], int HistoriaWpisan[4 * WYMIAR * WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], int& KtoryRuch, char ZnakGracz1, char ZnakGracz2)
+{
+        switch (HistoriaPlansz[KtoryRuch])                                                                                                                                              //wykonuje ruch zapisany w historii tak jakby to byl ruch gracza
+        {
+        case 'q':
+                if (KtoryRuch % 2 == 0) WpiszZnakDoTablicy(tabQ, ZnakGracz1, HistoriaWpisan[KtoryRuch]);
+                else WpiszZnakDoTablicy(tabQ, ZnakGracz2, HistoriaWpisan[KtoryRuch]);
+                break;
+        case 'w':
+                if (KtoryRuch % 2 == 0) WpiszZnakDoTablicy(tabW, ZnakGracz1, HistoriaWpisan[KtoryRuch]);
+                else WpiszZnakDoTablicy(tabW, ZnakGracz2, HistoriaWpisan[KtoryRuch]);
+                break;
+        case 'a':
+                if (KtoryRuch % 2 == 0) WpiszZnakDoTablicy(tabA, ZnakGracz1, HistoriaWpisan[KtoryRuch]);
+                else WpiszZnakDoTablicy(tabA, ZnakGracz2, HistoriaWpisan[KtoryRuch]);
+                break;
+        case 's':
+                if (KtoryRuch % 2 == 0) WpiszZnakDoTablicy(tabS, ZnakGracz1, HistoriaWpisan[KtoryRuch]);
+                else WpiszZnakDoTablicy(tabS, ZnakGracz2, HistoriaWpisan[KtoryRuch]);
+                break;
+        }
+
+        switch (HistoriaObrotow[(KtoryRuch) * 2])
+        {
+        case 'q':
+                if (HistoriaObrotow[2 * KtoryRuch + 1] == 'z') Obroc(tabQ, 'z');
+                else  Obroc(tabQ, 'x');
+                break;
+        case 'w':
+                if (HistoriaObrotow[2 * KtoryRuch + 1] == 'z') Obroc(tabW, 'z');
+                else  Obroc(tabW, 'x');
+                break;
+        case 'a':
+                if (HistoriaObrotow[2 * KtoryRuch + 1] == 'z') Obroc(tabA, 'z');
+                else  Obroc(tabA, 'x');
+                break;
+        case 's':
+                if (HistoriaObrotow[2 * KtoryRuch + 1] == 'z') Obroc(tabS, 'z');
+                else  Obroc(tabS, 'x');
+                break;
+        }
+
+        KtoryRuch++;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+void ZnajdzOptymalnaWartosc(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakGracza1, char ZnakGracza2, int KtoraGra, bool KoloKrzyz, char HistoriaPlansz[4 * WYMIAR * WYMIAR], int HistoriaWpisan[4 * WYMIAR * WYMIAR], char HistoriaObrotow[8 * WYMIAR * WYMIAR], int KtoryRuch, bool CzyPredefiniowanaPlansza)
+{
+        int OptymalnaWartoscRuchu = MINWARTOSC;
+        int Rzad = 0, Kolumna = 0, Obrot = 7;                                    //defaultowe ustawienie ruchu, ktorego tak naprawde algorytm nigdy nie wykona
+
+        for (int i = 0; i < 2 * WYMIAR; i++)
+        {
+                for (int j = 0; j < 2 * WYMIAR; j++)
+                {
+                        if (i < WYMIAR && j < WYMIAR)
+                        {
+                                if (tabQ[2 - i][j] == ' ')
+                                        for (int k = 7 - KtoraGra; k >= 0; k--)
+                                        {
+                                                int WartoscRuchu = Wartosc(tabQ, tabQ, tabW, tabA, tabS, ZnakGracza1, ZnakGracza2, KtoraGra, KoloKrzyz, KtoryRuch, i, j, k, CzyPredefiniowanaPlansza);           //wartosc defioniowana jest jako: liczba ujemna - wygrana gracza, liczba dodatnia - wygrana komputera, 0 - remis na chwile obecna
+                                                if (WartoscRuchu > OptymalnaWartoscRuchu)
+                                                {
+                                                        Rzad = i;                                                   //zmienia wartosci ruchu jesli jest lepszy od wartosci minimalnej
+                                                        Kolumna = j;
+                                                        if (!KoloKrzyz) Obrot = k;
+                                                        OptymalnaWartoscRuchu = WartoscRuchu;
+                                                }
+                                        }
+                        }
+                        else if (i < WYMIAR && j >= WYMIAR)
+                        {
+                                if (tabW[2 - i][j % WYMIAR] == ' ')
+                                        for (int k = 7 - KtoraGra; k >= 0; k--)
+                                        {
+                                                int WartoscRuchu = Wartosc(tabW, tabQ, tabW, tabA, tabS, ZnakGracza1, ZnakGracza2, KtoraGra, KoloKrzyz, KtoryRuch, i, j, k, CzyPredefiniowanaPlansza);
+                                                if (WartoscRuchu > OptymalnaWartoscRuchu)
+                                                {
+                                                        Rzad = i;
+                                                        Kolumna = j;
+                                                        if (!KoloKrzyz) Obrot = k;
+                                                        OptymalnaWartoscRuchu = WartoscRuchu;
+                                                }
+                                        }
+                        }
+                        else if (i >= WYMIAR && j < WYMIAR)
+                        {
+                                if (tabA[2 - i % WYMIAR][j] == ' ')
+                                        for (int k = 7 - KtoraGra; k >= 0; k--)
+                                        {
+                                                int WartoscRuchu = Wartosc(tabA, tabQ, tabW, tabA, tabS, ZnakGracza1, ZnakGracza2, KtoraGra, KoloKrzyz, KtoryRuch, i, j, k, CzyPredefiniowanaPlansza);
+                                                if (WartoscRuchu > OptymalnaWartoscRuchu)
+                                                {
+                                                        Rzad = i;
+                                                        Kolumna = j;
+                                                        if (!KoloKrzyz) Obrot = k;
+                                                        OptymalnaWartoscRuchu = WartoscRuchu;
+                                                }
+                                        }
+                        }
+                        else if (i >= WYMIAR && j >= WYMIAR)
+                        {
+                                if (tabS[2 - i % WYMIAR][j % WYMIAR] == ' ')
+                                        for (int k = 7 - KtoraGra; k >= 0; k--)
+                                        {
+                                                int WartoscRuchu = Wartosc(tabS, tabQ, tabW, tabA, tabS, ZnakGracza1, ZnakGracza2, KtoraGra, KoloKrzyz, KtoryRuch, i, j, k, CzyPredefiniowanaPlansza);
+                                                if (WartoscRuchu > OptymalnaWartoscRuchu)
+                                                {
+                                                        Rzad = i;
+                                                        Kolumna = j;
+                                                        if (!KoloKrzyz) Obrot = k;
+                                                        OptymalnaWartoscRuchu = WartoscRuchu;
+                                                }
+                                        }
+                        }
+                }
+        }
+
+        char KtoraTab;                                                   //wykonuje ruch, ktory wyliczy jako najlepszy
+        int Pole = 1 + WYMIAR * (2 - Rzad % WYMIAR) + Kolumna % WYMIAR;
+
+        if (Rzad < WYMIAR && Kolumna < WYMIAR)
+        {
+                tabQ[2 - Rzad][Kolumna] = ZnakGracza1;
+                KtoraTab = 'q';
+        }
+        else if (Rzad < WYMIAR && Kolumna >= WYMIAR)
+        {
+                tabW[2 - Rzad][Kolumna % WYMIAR] = ZnakGracza1;
+                KtoraTab = 'w';
+        }
+        else if (Rzad >= WYMIAR && Kolumna < WYMIAR)
+        {
+                tabA[2 - Rzad % WYMIAR][Kolumna] = ZnakGracza1;
+                KtoraTab = 'a';
+        }
+        else if (Rzad >= WYMIAR && Kolumna >= WYMIAR)
+        {
+                tabS[2 - Rzad % WYMIAR][Kolumna % WYMIAR] = ZnakGracza1;
+                KtoraTab = 's';
+        }
+        if (!KoloKrzyz)                                                   //wykonuje ewentualny obrot jesli gra to pentago
+        {
+                if (Obrot == 0)
+                {
+                        Obroc(tabQ, 'z');
+                        HistoriaObrotow[2 * KtoryRuch] = 'q';
+                        HistoriaObrotow[2 * KtoryRuch + 1] = 'z';
+                }
+                else if (Obrot == 1)
+                {
+                        Obroc(tabQ, 'x');
+                        HistoriaObrotow[2 * KtoryRuch] = 'q';
+                        HistoriaObrotow[2 * KtoryRuch + 1] = 'x';
+                }
+                else if (Obrot == 2)
+                {
+                        Obroc(tabW, 'z');
+                        HistoriaObrotow[2 * KtoryRuch] = 'w';
+                        HistoriaObrotow[2 * KtoryRuch + 1] = 'z';
+                }
+                else if (Obrot == 3)
+                {
+                        Obroc(tabW, 'x');
+                        HistoriaObrotow[2 * KtoryRuch] = 'w';
+                        HistoriaObrotow[2 * KtoryRuch + 1] = 'x';
+                }
+                else if (Obrot == 4)
+                {
+                        Obroc(tabA, 'z');
+                        HistoriaObrotow[2 * KtoryRuch] = 'a';
+                        HistoriaObrotow[2 * KtoryRuch + 1] = 'z';
+                }
+                else if (Obrot == 5)
+                {
+                        Obroc(tabA, 'x');
+                        HistoriaObrotow[2 * KtoryRuch] = 'a';
+                        HistoriaObrotow[2 * KtoryRuch + 1] = 'x';
+                }
+                else if (Obrot == 6)
+                {
+                        Obroc(tabS, 'z');
+                        HistoriaObrotow[2 * KtoryRuch] = 's';
+                        HistoriaObrotow[2 * KtoryRuch + 1] = 'z';
+                }
+                else if (Obrot == 7)
+                {
+                        Obroc(tabS, 'x');
+                        HistoriaObrotow[2 * KtoryRuch] = 's';
+                        HistoriaObrotow[2 * KtoryRuch + 1] = 'x';
+                }
+        }
+        HistoriaPlansz[KtoryRuch] = KtoraTab;
+        HistoriaWpisan[KtoryRuch] = Pole;
+        return;
+}
+
+int Wartosc(char Tablica[WYMIAR][WYMIAR], char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], char ZnakGracza1, char ZnakGracza2, int KtoraGra, bool KoloKrzyz, int KtoryRuch, int  i, int j, int k, bool CzyPredefiniowanaPlansza)
+{
+        Tablica[2 - i % WYMIAR][j % WYMIAR] = ZnakGracza1;                                                   //wykonuje ruch, ktory potem sprawdzi
+        if (!KoloKrzyz)
+        {
+                if (k == 0) Obroc(tabQ, 'z');                                                   //sprawdza wszystkie mozliwe obroty po kolei
+                else if (k == 1) Obroc(tabQ, 'x');
+                else if (k == 2) Obroc(tabW, 'z');
+                else if (k == 3) Obroc(tabW, 'x');
+                else if (k == 4) Obroc(tabA, 'z');
+                else if (k == 5) Obroc(tabA, 'x');
+                else if (k == 6) Obroc(tabS, 'z');
+                else if (k == 7) Obroc(tabS, 'x');
+        }
+        int WartoscRuchu = AlfaBeta(tabQ, tabW, tabA, tabS, 0, false, ZnakGracza1, ZnakGracza2, MINWARTOSC, MAXWARTOSC, KtoraGra, KoloKrzyz, KtoryRuch, CzyPredefiniowanaPlansza);
+        if (!KoloKrzyz)
+        {
+                if (k == 0) Obroc(tabQ, 'x');                                                   //cofa obroty
+                else if (k == 1) Obroc(tabQ, 'z');
+                else if (k == 2) Obroc(tabW, 'x');
+                else if (k == 3) Obroc(tabW, 'z');
+                else if (k == 4) Obroc(tabA, 'x');
+                else if (k == 5) Obroc(tabA, 'z');
+                else if (k == 6) Obroc(tabS, 'x');
+                else if (k == 7) Obroc(tabS, 'z');
+        }
+        Tablica[2 - i % WYMIAR][j % WYMIAR] = ' ';                                                   //cofa ruch
+        return WartoscRuchu;
+}
+
+
+int AlfaBeta(char tabQ[WYMIAR][WYMIAR], char tabW[WYMIAR][WYMIAR], char tabA[WYMIAR][WYMIAR], char tabS[WYMIAR][WYMIAR], int GlebokoscObecna, bool CzyMaksymalizujacyGracz, char ZnakGracza1, char ZnakGracza2, int Alfa, int Beta, int KtoraGra, bool KoloKrzyz, int KtoryRuch, bool CzyPredefiniowanaPlansza)
+{
+        int score = SprawdzWygrana(tabQ, tabW, tabA, tabS, ZnakGracza1);
+
+        if (score == 1)
+                return score;
+
+        if (score == -1)
+                return score;
+
+        if (GlebokoscObecna == GLEBOKOSC)                                                   //nie sprawdza ruchow po osiagnieciu glebokosci
+                return score;
+
+        if (KtoryRuch >= 4 * WYMIAR * WYMIAR - 1)                                                   //zabezpieczenie zeby nie wyszedl poza tablice
+                return score;
+        if (CzyPredefiniowanaPlansza)                                                   //analogiczne zabezpiecze w przypadku gdy gramy z komputerem na predefiniowanej planszy
+                if (KtoryRuch >= 4 * WYMIAR * WYMIAR - 17)
+                        return score;
+
+        if (CzyMaksymalizujacyGracz)                                                   //ruch komputera (chce on osiagnac jak najwieksza wartosc ruchu)
+        {
+                int OptymalnaWartosc = MINWARTOSC;
+
+                for (int i = 0; i < 2 * WYMIAR; i++)
+                {
+                        for (int j = 0; j < 2 * WYMIAR; j++)
+                        {
+                                if (i < WYMIAR && j < WYMIAR)
+                                {
+                                        if (tabQ[2 - i][j] == ' ')
+                                                for (int k = 7 - KtoraGra; k >= 0; k--)
+                                                {
+                                                        tabQ[2 - i][j] = ZnakGracza1;
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'z');
+                                                                else if (k == 1) Obroc(tabQ, 'x');
+                                                                else if (k == 2) Obroc(tabW, 'z');
+                                                                else if (k == 3) Obroc(tabW, 'x');
+                                                                else if (k == 4) Obroc(tabA, 'z');
+                                                                else if (k == 5) Obroc(tabA, 'x');
+                                                                else if (k == 6) Obroc(tabS, 'z');
+                                                                else if (k == 7) Obroc(tabS, 'x');
+                                                        }
+                                                        OptymalnaWartosc = max(OptymalnaWartosc, AlfaBeta(tabQ, tabW, tabA, tabS, GlebokoscObecna + 1, !CzyMaksymalizujacyGracz, ZnakGracza1, ZnakGracza2, Alfa, Beta, KtoraGra, KoloKrzyz, KtoryRuch + 1, CzyPredefiniowanaPlansza));
+                                                        Alfa = max(Alfa, OptymalnaWartosc);
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'x');
+                                                                else if (k == 1) Obroc(tabQ, 'z');
+                                                                else if (k == 2) Obroc(tabW, 'x');
+                                                                else if (k == 3) Obroc(tabW, 'z');
+                                                                else if (k == 4) Obroc(tabA, 'x');
+                                                                else if (k == 5) Obroc(tabA, 'z');
+                                                                else if (k == 6) Obroc(tabS, 'x');
+                                                                else if (k == 7) Obroc(tabS, 'z');
+                                                        }
+                                                        tabQ[2 - i][j] = ' ';
+                                                        if (Beta <= Alfa)
+                                                                break;
+                                                }
+                                }
+                                else if (i < WYMIAR && j >= WYMIAR)
+                                {
+                                        if (tabW[2 - i][j % WYMIAR] == ' ')
+                                                for (int k = 7 - KtoraGra; k >= 0; k--)
+                                                {
+                                                        tabW[2 - i][j % WYMIAR] = ZnakGracza1;
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'z');
+                                                                else if (k == 1) Obroc(tabQ, 'x');
+                                                                else if (k == 2) Obroc(tabW, 'z');
+                                                                else if (k == 3) Obroc(tabW, 'x');
+                                                                else if (k == 4) Obroc(tabA, 'z');
+                                                                else if (k == 5) Obroc(tabA, 'x');
+                                                                else if (k == 6) Obroc(tabS, 'z');
+                                                                else if (k == 7) Obroc(tabS, 'x');
+                                                        }
+                                                        OptymalnaWartosc = max(OptymalnaWartosc, AlfaBeta(tabQ, tabW, tabA, tabS, GlebokoscObecna + 1, !CzyMaksymalizujacyGracz, ZnakGracza1, ZnakGracza2, Alfa, Beta, KtoraGra, KoloKrzyz, KtoryRuch + 1, CzyPredefiniowanaPlansza));
+                                                        Alfa = max(Alfa, OptymalnaWartosc);
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'x');
+                                                                else if (k == 1) Obroc(tabQ, 'z');
+                                                                else if (k == 2) Obroc(tabW, 'x');
+                                                                else if (k == 3) Obroc(tabW, 'z');
+                                                                else if (k == 4) Obroc(tabA, 'x');
+                                                                else if (k == 5) Obroc(tabA, 'z');
+                                                                else if (k == 6) Obroc(tabS, 'x');
+                                                                else if (k == 7) Obroc(tabS, 'z');
+                                                        }
+                                                        tabW[2 - i][j % WYMIAR] = ' ';
+                                                        if (Beta <= Alfa)
+                                                                break;
+                                                }
+                                }
+                                else if (i >= WYMIAR && j < WYMIAR)
+                                {
+                                        if (tabA[2 - i % WYMIAR][j] == ' ')
+                                                for (int k = 7 - KtoraGra; k >= 0; k--)
+                                                {
+                                                        tabA[2 - i % WYMIAR][j] = ZnakGracza1;
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'z');
+                                                                else if (k == 1) Obroc(tabQ, 'x');
+                                                                else if (k == 2) Obroc(tabW, 'z');
+                                                                else if (k == 3) Obroc(tabW, 'x');
+                                                                else if (k == 4) Obroc(tabA, 'z');
+                                                                else if (k == 5) Obroc(tabA, 'x');
+                                                                else if (k == 6) Obroc(tabS, 'z');
+                                                                else if (k == 7) Obroc(tabS, 'x');
+                                                        }
+                                                        OptymalnaWartosc = max(OptymalnaWartosc, AlfaBeta(tabQ, tabW, tabA, tabS, GlebokoscObecna + 1, !CzyMaksymalizujacyGracz, ZnakGracza1, ZnakGracza2, Alfa, Beta, KtoraGra, KoloKrzyz, KtoryRuch + 1, CzyPredefiniowanaPlansza));
+                                                        Alfa = max(Alfa, OptymalnaWartosc);
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'x');
+                                                                else if (k == 1) Obroc(tabQ, 'z');
+                                                                else if (k == 2) Obroc(tabW, 'x');
+                                                                else if (k == 3) Obroc(tabW, 'z');
+                                                                else if (k == 4) Obroc(tabA, 'x');
+                                                                else if (k == 5) Obroc(tabA, 'z');
+                                                                else if (k == 6) Obroc(tabS, 'x');
+                                                                else if (k == 7) Obroc(tabS, 'z');
+                                                        }
+                                                        tabA[2 - i % WYMIAR][j] = ' ';
+                                                        if (Beta <= Alfa)
+                                                                break;
+                                                }
+                                }
+                                else if (i >= WYMIAR && j >= WYMIAR)
+                                {
+                                        if (tabS[2 - i % WYMIAR][j % WYMIAR] == ' ')
+                                                for (int k = 7 - KtoraGra; k >= 0; k--)
+                                                {
+                                                        tabS[2 - i % WYMIAR][j % WYMIAR] = ZnakGracza1;
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'z');
+                                                                else if (k == 1) Obroc(tabQ, 'x');
+                                                                else if (k == 2) Obroc(tabW, 'z');
+                                                                else if (k == 3) Obroc(tabW, 'x');
+                                                                else if (k == 4) Obroc(tabA, 'z');
+                                                                else if (k == 5) Obroc(tabA, 'x');
+                                                                else if (k == 6) Obroc(tabS, 'z');
+                                                                else if (k == 7) Obroc(tabS, 'x');
+                                                        }
+                                                        OptymalnaWartosc = max(OptymalnaWartosc, AlfaBeta(tabQ, tabW, tabA, tabS, GlebokoscObecna + 1, !CzyMaksymalizujacyGracz, ZnakGracza1, ZnakGracza2, Alfa, Beta, KtoraGra, KoloKrzyz, KtoryRuch + 1, CzyPredefiniowanaPlansza));
+                                                        Alfa = max(Alfa, OptymalnaWartosc);
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'x');
+                                                                else if (k == 1) Obroc(tabQ, 'z');
+                                                                else if (k == 2) Obroc(tabW, 'x');
+                                                                else if (k == 3) Obroc(tabW, 'z');
+                                                                else if (k == 4) Obroc(tabA, 'x');
+                                                                else if (k == 5) Obroc(tabA, 'z');
+                                                                else if (k == 6) Obroc(tabS, 'x');
+                                                                else if (k == 7) Obroc(tabS, 'z');
+                                                        }
+                                                        tabS[2 - i % WYMIAR][j % WYMIAR] = ' ';
+                                                        if (Beta <= Alfa)
+                                                                break;
+                                                }
+                                }
+                                if (Beta <= Alfa)
+                                        break;
+                        }
+                        if (Beta <= Alfa)
+                                break;
+                }
+                return OptymalnaWartosc;                                                   //zwraca wartosc optymalna dla komputera wedlug algorytmu
+        }
+
+        if (!CzyMaksymalizujacyGracz)                                                   //ruch gracza wykonywany przez algorytm (chce osiagnac wartosc jak najmniejsza)
+        {
+                int OptymalnaWartosc = MAXWARTOSC;
+
+                for (int i = 0; i < 2 * WYMIAR; i++)
+                {
+                        for (int j = 0; j < 2 * WYMIAR; j++)
+                        {
+                                if (i < WYMIAR && j < WYMIAR)
+                                {
+                                        if (tabQ[2 - i][j] == ' ')
+                                                for (int k = 7 - KtoraGra; k >= 0; k--)
+                                                {
+                                                        tabQ[2 - i][j] = ZnakGracza2;
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'z');
+                                                                else if (k == 1) Obroc(tabQ, 'x');
+                                                                else if (k == 2) Obroc(tabW, 'z');
+                                                                else if (k == 3) Obroc(tabW, 'x');
+                                                                else if (k == 4) Obroc(tabA, 'z');
+                                                                else if (k == 5) Obroc(tabA, 'x');
+                                                                else if (k == 6) Obroc(tabS, 'z');
+                                                                else if (k == 7) Obroc(tabS, 'x');
+                                                        }
+                                                        OptymalnaWartosc = min(OptymalnaWartosc, AlfaBeta(tabQ, tabW, tabA, tabS, GlebokoscObecna + 1, !CzyMaksymalizujacyGracz, ZnakGracza1, ZnakGracza2, Alfa, Beta, KtoraGra, KoloKrzyz, KtoryRuch + 1, CzyPredefiniowanaPlansza));
+                                                        Beta = min(Beta, OptymalnaWartosc);
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'x');
+                                                                else if (k == 1) Obroc(tabQ, 'z');
+                                                                else if (k == 2) Obroc(tabW, 'x');
+                                                                else if (k == 3) Obroc(tabW, 'z');
+                                                                else if (k == 4) Obroc(tabA, 'x');
+                                                                else if (k == 5) Obroc(tabA, 'z');
+                                                                else if (k == 6) Obroc(tabS, 'x');
+                                                                else if (k == 7) Obroc(tabS, 'z');
+                                                        }
+                                                        tabQ[2 - i][j] = ' ';
+                                                        if (Beta <= Alfa)
+                                                                break;
+                                                }
+                                }
+                                else if (i < WYMIAR && j >= WYMIAR)
+                                {
+                                        if (tabW[2 - i][j % WYMIAR] == ' ')
+                                                for (int k = 7 - KtoraGra; k >= 0; k--)
+                                                {
+                                                        tabW[2 - i][j % WYMIAR] = ZnakGracza2;
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'z');
+                                                                else if (k == 1) Obroc(tabQ, 'x');
+                                                                else if (k == 2) Obroc(tabW, 'z');
+                                                                else if (k == 3) Obroc(tabW, 'x');
+                                                                else if (k == 4) Obroc(tabA, 'z');
+                                                                else if (k == 5) Obroc(tabA, 'x');
+                                                                else if (k == 6) Obroc(tabS, 'z');
+                                                                else if (k == 7) Obroc(tabS, 'x');
+                                                        }
+                                                        OptymalnaWartosc = min(OptymalnaWartosc, AlfaBeta(tabQ, tabW, tabA, tabS, GlebokoscObecna + 1, !CzyMaksymalizujacyGracz, ZnakGracza1, ZnakGracza2, Alfa, Beta, KtoraGra, KoloKrzyz, KtoryRuch + 1, CzyPredefiniowanaPlansza));
+                                                        Beta = min(Beta, OptymalnaWartosc);
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'x');
+                                                                else if (k == 1) Obroc(tabQ, 'z');
+                                                                else if (k == 2) Obroc(tabW, 'x');
+                                                                else if (k == 3) Obroc(tabW, 'z');
+                                                                else if (k == 4) Obroc(tabA, 'x');
+                                                                else if (k == 5) Obroc(tabA, 'z');
+                                                                else if (k == 6) Obroc(tabS, 'x');
+                                                                else if (k == 7) Obroc(tabS, 'z');
+                                                        }
+                                                        tabW[2 - i][j % WYMIAR] = ' ';
+                                                        if (Beta <= Alfa)
+                                                                break;
+                                                }
+                                }
+                                else if (i >= WYMIAR && j < WYMIAR)
+                                {
+                                        if (tabA[2 - i % WYMIAR][j] == ' ')
+                                                for (int k = 7 - KtoraGra; k >= 0; k--)
+                                                {
+                                                        tabA[2 - i % WYMIAR][j] = ZnakGracza2;
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'z');
+                                                                else if (k == 1) Obroc(tabQ, 'x');
+                                                                else if (k == 2) Obroc(tabW, 'z');
+                                                                else if (k == 3) Obroc(tabW, 'x');
+                                                                else if (k == 4) Obroc(tabA, 'z');
+                                                                else if (k == 5) Obroc(tabA, 'x');
+                                                                else if (k == 6) Obroc(tabS, 'z');
+                                                                else if (k == 7) Obroc(tabS, 'x');
+                                                        }
+                                                        OptymalnaWartosc = min(OptymalnaWartosc, AlfaBeta(tabQ, tabW, tabA, tabS, GlebokoscObecna + 1, !CzyMaksymalizujacyGracz, ZnakGracza1, ZnakGracza2, Alfa, Beta, KtoraGra, KoloKrzyz, KtoryRuch + 1, CzyPredefiniowanaPlansza));
+                                                        Beta = min(Beta, OptymalnaWartosc);
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'x');
+                                                                else if (k == 1) Obroc(tabQ, 'z');
+                                                                else if (k == 2) Obroc(tabW, 'x');
+                                                                else if (k == 3) Obroc(tabW, 'z');
+                                                                else if (k == 4) Obroc(tabA, 'x');
+                                                                else if (k == 5) Obroc(tabA, 'z');
+                                                                else if (k == 6) Obroc(tabS, 'x');
+                                                                else if (k == 7) Obroc(tabS, 'z');
+                                                        }
+                                                        tabA[2 - i % WYMIAR][j] = ' ';
+                                                        if (Beta <= Alfa)
+                                                                break;
+                                                }
+                                }
+                                else if (i >= WYMIAR && j >= WYMIAR)
+                                {
+                                        if (tabS[2 - i % WYMIAR][j % WYMIAR] == ' ')
+                                                for (int k = 7 - KtoraGra; k >= 0; k--)
+                                                {
+                                                        tabS[2 - i % WYMIAR][j % WYMIAR] = ZnakGracza2;
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'z');
+                                                                else if (k == 1) Obroc(tabQ, 'x');
+                                                                else if (k == 2) Obroc(tabW, 'z');
+                                                                else if (k == 3) Obroc(tabW, 'x');
+                                                                else if (k == 4) Obroc(tabA, 'z');
+                                                                else if (k == 5) Obroc(tabA, 'x');
+                                                                else if (k == 6) Obroc(tabS, 'z');
+                                                                else if (k == 7) Obroc(tabS, 'x');
+                                                        }
+                                                        OptymalnaWartosc = min(OptymalnaWartosc, AlfaBeta(tabQ, tabW, tabA, tabS, GlebokoscObecna + 1, !CzyMaksymalizujacyGracz, ZnakGracza1, ZnakGracza2, Alfa, Beta, KtoraGra, KoloKrzyz, KtoryRuch + 1, CzyPredefiniowanaPlansza));
+                                                        Beta = min(Beta, OptymalnaWartosc);
+                                                        if (!KoloKrzyz)
+                                                        {
+                                                                if (k == 0) Obroc(tabQ, 'x');
+                                                                else if (k == 1) Obroc(tabQ, 'z');
+                                                                else if (k == 2) Obroc(tabW, 'x');
+                                                                else if (k == 3) Obroc(tabW, 'z');
+                                                                else if (k == 4) Obroc(tabA, 'x');
+                                                                else if (k == 5) Obroc(tabA, 'z');
+                                                                else if (k == 6) Obroc(tabS, 'x');
+                                                                else if (k == 7) Obroc(tabS, 'z');
+                                                        }
+                                                        tabS[2 - i % WYMIAR][j % WYMIAR] = ' ';
+                                                        if (Beta <= Alfa)
+                                                                break;
+                                                }
+                                }
+                                if (Beta <= Alfa)
+                                        break;
+                        }
+                        if (Beta <= Alfa)
+                                break;
+                }
+                return OptymalnaWartosc;                                                   //zwraca wartosc optymalna dla gracza wedlug algorytmu
+        }
+        return MINWARTOSC;                                                   //w razie jakby cos poszlo nie tak to zwroci najgorsza mozliwa wartosc dla komputera
+}

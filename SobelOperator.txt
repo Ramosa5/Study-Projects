@@ -1,0 +1,473 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+
+#define WYMIAR 3                                  //wymiar maski i ich ilosc
+#define ILOSC_MASEK 8
+
+const char* NazwyPlikowMaski[ILOSC_MASEK] = { "maska1.txt", "maska2.txt", "maska3.txt", "maska4.txt", "maska5.txt", "maska6.txt", "maska7.txt", "maska8.txt" };
+
+
+using namespace std;
+
+struct NaglowekZdjecia {
+        uint16_t TypPliku{ 0x4D42 };                                     
+        uint32_t Wielkosc{ 0 };
+        uint16_t PolaZarezerwowane1{ 0 };
+        uint16_t PolaZarezerwowane2{ 0 };
+        uint32_t Pozycja{ 0 };
+};
+
+struct NaglowekPliku {
+        uint32_t RozmiarNaglowkaPliku{ 0 };
+        int32_t Szerokosc{ 0 };
+        int32_t Wysokosc{ 0 };
+        uint16_t Plaszczyzny{ 1 };
+        uint16_t BityNaPiksel{ 0 };
+        uint32_t Kompresja{ 0 };
+        uint32_t RozmiarZdjecia{ 0 };
+        int32_t RozdzielczoscPozioma{ 0 };
+        int32_t RozdzielczoscPionowa{ 0 };
+        uint32_t IndexyKolorow{ 0 };
+        uint32_t NumeryKolorow{ 0 };
+        uint8_t Puste[500];
+};
+
+struct rgb {
+        uint8_t B{ 0 };
+        uint8_t G{ 0 };
+        uint8_t R{ 0 };
+};
+
+
+void OdczytajNaglowekZdjecia(ifstream& PlikDoWczytania, NaglowekZdjecia& Naglowek);
+void OdczytajNaglowekPliku(ifstream& PlikDoWczytania, NaglowekPliku& NaglowekInf);
+void WpiszDoTab(rgb** Tablica, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf, ifstream& PlikDoWczytania);
+void WypiszNaglowek(NaglowekZdjecia Naglowek, NaglowekPliku& NaglowekInf);
+void Sobel(rgb** Tablica, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf, int Wysokosc);
+void WpiszDoPliku(rgb** Tablica, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf);
+void WczytajMaske(int filtr[WYMIAR * WYMIAR], string Nazwa);
+void WczytajTabMasek(int filtr[ILOSC_MASEK][WYMIAR * WYMIAR]);
+void ZapiszHeader(ofstream& PlikWyjscie, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf);
+void WczytajFragment(rgb** Fragm, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf, ifstream& PlikDoWczytania, int Wysokosc, int KtoryFrag);
+void Fragment(ifstream& PlikDoWczytania, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf);
+void ZapiszFragment(rgb** Fragm, ofstream& PlikWyjscie, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf, int Wysokosc, int KtoryFrag);
+
+int main()
+{
+        string Nazwa;
+        ifstream PlikDoWczytania;
+        NaglowekZdjecia Naglowek;
+        NaglowekPliku NaglowekInf;
+        cout << "Podaj nazwe BMP do wczytania: ";
+        cin >> Nazwa;
+        cout << endl;
+        PlikDoWczytania.open(Nazwa, ios::in | ios::binary);
+        if (!PlikDoWczytania)
+                cout << "Nie udalo sie otworzyc pliku. ";
+
+        OdczytajNaglowekZdjecia(PlikDoWczytania, Naglowek);
+        OdczytajNaglowekPliku(PlikDoWczytania, NaglowekInf);
+        WypiszNaglowek(Naglowek, NaglowekInf);
+
+        if (NaglowekInf.Wysokosc < 0) NaglowekInf.Wysokosc *= (-1);
+
+        cout << endl << "1 - Operacja na calym pliku" << endl << "2 - Operacja fragmentami" << endl;
+        int Wybor;
+        cin >> Wybor;
+
+        if (Wybor == 1)
+        {
+                rgb** Tablica = new rgb * [NaglowekInf.Wysokosc];
+                for (int i = 0; i < NaglowekInf.Wysokosc; i++)
+                        Tablica[i] = new rgb[NaglowekInf.Szerokosc * 3];
+
+                WpiszDoTab(Tablica, Naglowek, NaglowekInf, PlikDoWczytania);
+
+                Sobel(Tablica, Naglowek, NaglowekInf, NaglowekInf.Wysokosc);
+
+                WpiszDoPliku(Tablica, Naglowek, NaglowekInf);
+
+                for (int i = 0; i < NaglowekInf.Wysokosc; i++)
+                        delete[] Tablica[i];
+                delete[] Tablica;
+        }
+        else if (Wybor == 2)
+        {
+                Fragment(PlikDoWczytania, Naglowek, NaglowekInf);
+        }
+        else cout << endl << "Niepoprawne wczytanie wyboru - koniec dzialania programu" << endl;
+
+        PlikDoWczytania.close();
+
+        return 0;
+}
+
+void OdczytajNaglowekZdjecia(ifstream& PlikDoWczytania, NaglowekZdjecia& Naglowek)
+{
+        PlikDoWczytania.read(reinterpret_cast<char*>(&Naglowek.TypPliku), 2);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&Naglowek.Wielkosc), 4);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&Naglowek.PolaZarezerwowane1), 2);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&Naglowek.PolaZarezerwowane2), 2);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&Naglowek.Pozycja), 4);
+}
+
+void OdczytajNaglowekPliku(ifstream& PlikDoWczytania, NaglowekPliku& NaglowekInf)
+{
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.RozmiarNaglowkaPliku), 4);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.Szerokosc), 4);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.Wysokosc), 4);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.Plaszczyzny), 2);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.BityNaPiksel), 2);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.Kompresja), 4);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.RozmiarZdjecia), 4);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.RozdzielczoscPozioma), 4);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.RozdzielczoscPionowa), 4);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.IndexyKolorow), 4);
+        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.NumeryKolorow), 4);
+}
+
+
+void WypiszNaglowek(NaglowekZdjecia Naglowek, NaglowekPliku& NaglowekInf)
+{
+        cout << endl << "Naglowek Zdjecia: ";
+        cout << endl << "Typ Pliku: " << Naglowek.TypPliku;
+        cout << endl << "Wielkosc: " << Naglowek.Wielkosc;
+        cout << endl << "Zarezerwowane pola: " << Naglowek.PolaZarezerwowane1;
+        cout << endl << "Zarezerwowane pola: " << Naglowek.PolaZarezerwowane2;
+        cout << endl << "Bity zerowe: " << Naglowek.Pozycja;
+        cout << endl << endl << "Naglowek Pliku: ";
+        cout << endl << "Rozmiar naglowka informacyjnego: " << NaglowekInf.RozmiarNaglowkaPliku;
+        cout << endl << "Szerokosc obrazu: " << NaglowekInf.Szerokosc;
+        cout << endl << "Wysokosc obrazu: " << NaglowekInf.Wysokosc;
+        cout << endl << "Liczba plaszczyzn: " << NaglowekInf.Plaszczyzny;
+        cout << endl << "Liczba bitow na piksel: " << NaglowekInf.BityNaPiksel;
+        cout << endl << "Algorytm kompresji: " << NaglowekInf.Kompresja;
+        cout << endl << "Rozmiar rysunku: " << NaglowekInf.RozmiarZdjecia;
+        cout << endl << "Rozdzielczosc pozioma: " << NaglowekInf.RozdzielczoscPozioma;
+        cout << endl << "Rozdzielczosc pionowa: " << NaglowekInf.RozdzielczoscPionowa;
+        cout << endl << "Liczba kolorow w palecie: " << NaglowekInf.IndexyKolorow;
+        cout << endl << "Liczba waznych kolorow: " << NaglowekInf.NumeryKolorow << endl;
+}
+
+void WpiszDoTab(rgb** Tablica, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf, ifstream& PlikDoWczytania)
+{
+        if (Naglowek.Pozycja != 54)
+        {
+                for (int k = 54; k < Naglowek.Pozycja; k++)
+                        PlikDoWczytania.read(reinterpret_cast<char*>(&NaglowekInf.Puste[k]), 1);
+        }
+
+        for (int i = 0; i < NaglowekInf.Wysokosc; i++)
+        {
+                for (int k = 0; k < NaglowekInf.Szerokosc; k++)
+                {
+                        PlikDoWczytania.read(reinterpret_cast<char*>(&Tablica[i][k].B), 1);
+                        PlikDoWczytania.read(reinterpret_cast<char*>(&Tablica[i][k].G), 1);
+                        PlikDoWczytania.read(reinterpret_cast<char*>(&Tablica[i][k].R), 1);
+                }
+
+
+                for (int i = 0; i < ((Naglowek.Wielkosc - Naglowek.Pozycja - 3 * NaglowekInf.Wysokosc * NaglowekInf.Szerokosc) / NaglowekInf.Wysokosc) % 4; i++)
+                        PlikDoWczytania.ignore(1);
+        }
+}
+
+void WpiszDoPliku(rgb** Tablica, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf)
+{
+        string Nazwa;
+        ofstream PlikWyjscie;
+        cout << "Podaj nazwe BMP do wypisania: ";
+        cin >> Nazwa;
+        PlikWyjscie.open(Nazwa, ios::out | ios::binary);
+        ZapiszHeader(PlikWyjscie, Naglowek, NaglowekInf);
+
+        for (int i = 0; i < NaglowekInf.Wysokosc; i++)
+        {
+                for (int k = 0; k < NaglowekInf.Szerokosc; k++)
+                {
+                        PlikWyjscie.write(reinterpret_cast<char*>(&Tablica[i][k].B), 1);
+                        PlikWyjscie.write(reinterpret_cast<char*>(&Tablica[i][k].G), 1);
+                        PlikWyjscie.write(reinterpret_cast<char*>(&Tablica[i][k].R), 1);
+                }
+
+                uint8_t zero = 0;
+
+                for (int i = 0; i < ((Naglowek.Wielkosc - Naglowek.Pozycja - 3 * NaglowekInf.Wysokosc * NaglowekInf.Szerokosc) / NaglowekInf.Wysokosc) % 4; i++)
+                        PlikWyjscie.write((char*)&zero, 1);
+        }
+
+        PlikWyjscie.close();
+}
+
+void Sobel(rgb** Tablica, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf, int Wysokosc)
+{
+        int filtr[ILOSC_MASEK][WYMIAR * WYMIAR];
+        WczytajTabMasek(filtr);
+
+
+        rgb** Buf = new rgb * [Wysokosc];
+        for (int i = 0; i < Wysokosc; i++)
+                Buf[i] = new rgb[NaglowekInf.Szerokosc];
+
+        for (int i = 0; i < Wysokosc; i++)
+                for (int k = 0; k < NaglowekInf.Szerokosc; k++)
+                {
+                        Buf[i][k].B = 0;
+                        Buf[i][k].G = 0;
+                        Buf[i][k].R = 0;
+                }
+
+        for (int i = (WYMIAR - 1) / 2; i < Wysokosc - (WYMIAR - 1) / 2; i++)                                   //(wymiar-1)/2 to piksele ktorych nie nalezy obrabiac filtrem zeby nie wyjsc za tablice
+        {
+                for (int k = (WYMIAR - 1) / 2; k < NaglowekInf.Szerokosc - (WYMIAR - 1) / 2; k++)
+                {
+                        int maska[ILOSC_MASEK];
+                        int WartoscMaski = 0;
+                        for (int g = 0; g < ILOSC_MASEK; g++)
+                        {
+                                maska[g] = Tablica[i - (WYMIAR - 1) / 2][k - (WYMIAR - 1) / 2].B * filtr[g][0];
+                                int Buffer = (WYMIAR - 1) / 2;
+                                for (int h = 1; h < WYMIAR * WYMIAR; h++)
+                                {
+                                        if (h % WYMIAR == 0) --Buffer;
+                                        maska[g] += Tablica[i - Buffer][k - (WYMIAR - 1) / 2 + h % WYMIAR].B * filtr[g][h];
+                                }
+                                if (maska[g] > 255) maska[g] = 255;
+                                else if (maska[g] < 0) maska[g] = 0;
+                                WartoscMaski += maska[g];
+                        }
+                        Buf[i][k].B = WartoscMaski / ILOSC_MASEK;
+                        WartoscMaski = 0;
+
+                        for (int g = 0; g < ILOSC_MASEK; g++)
+                        {
+                                maska[g] = Tablica[i - (WYMIAR - 1) / 2][k - (WYMIAR - 1) / 2].G * filtr[g][0];
+                                int Buffer = (WYMIAR - 1) / 2;
+                                for (int h = 1; h < WYMIAR * WYMIAR; h++)
+                                {
+                                        if (h % WYMIAR == 0) --Buffer;
+                                        maska[g] += Tablica[i - Buffer][k - (WYMIAR - 1) / 2 + h % WYMIAR].G * filtr[g][h];
+                                }
+                                if (maska[g] > 255) maska[g] = 255;
+                                else if (maska[g] < 0) maska[g] = 0;
+                                WartoscMaski += maska[g];
+                        }
+                        Buf[i][k].G = WartoscMaski / ILOSC_MASEK;
+                        WartoscMaski = 0;
+
+                        for (int g = 0; g < ILOSC_MASEK; g++)
+                        {
+                                maska[g] = Tablica[i - (WYMIAR - 1) / 2][k - (WYMIAR - 1) / 2].R * filtr[g][0];
+                                int Buffer = (WYMIAR - 1) / 2;
+                                for (int h = 1; h < WYMIAR * WYMIAR; h++)
+                                {
+                                        if (h % WYMIAR == 0) --Buffer;
+                                        maska[g] += Tablica[i - Buffer][k - (WYMIAR - 1) / 2 + h % WYMIAR].R * filtr[g][h];
+                                }
+                                if (maska[g] > 255) maska[g] = 255;
+                                else if (maska[g] < 0) maska[g] = 0;
+                                WartoscMaski += maska[g];
+                        }
+                        Buf[i][k].R = WartoscMaski / ILOSC_MASEK;
+                }
+
+        }
+
+        for (int i = 0; i < Wysokosc; i++)
+                for (int k = 0; k < NaglowekInf.Szerokosc; k++)
+                {
+                        Tablica[i][k].B = Buf[i][k].B;
+                        Tablica[i][k].G = Buf[i][k].G;
+                        Tablica[i][k].R = Buf[i][k].R;
+                }
+
+        for (int i = 0; i < Wysokosc; i++)
+                delete[] Buf[i];
+        delete[] Buf;
+}
+
+void WczytajTabMasek(int filtr[ILOSC_MASEK][WYMIAR * WYMIAR])
+{
+        for (int i = 0; i < ILOSC_MASEK; i++)
+                WczytajMaske(filtr[i], NazwyPlikowMaski[i]);
+}
+
+void WczytajMaske(int filtr[WYMIAR * WYMIAR], string Nazwa)
+{
+        ifstream PlikMaski;
+        PlikMaski.open(Nazwa);
+        for (int i = 0; i < WYMIAR * WYMIAR; i++)
+        {
+                string liczba;
+                getline(PlikMaski, liczba);
+                filtr[i] = stoi(liczba);
+        }
+
+        PlikMaski.close();
+}
+
+void Fragment(ifstream& PlikDoWczytania, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf)
+{
+        int Wysokosc;
+        cout << endl << "Podaj wysokosc fragmentu w pikselach: ";
+        if (!(cin >> Wysokosc)) {
+                cout << endl << "Niepoprawne wczytanie wyboru - koniec dzialania programu" << endl;
+                return;
+        }
+        string Nazwa;
+        ofstream PlikWyjscie;
+        cout << endl << "Podaj nazwe BMP do wypisania: ";
+        cin >> Nazwa;
+
+        if (!(PlikWyjscie)) {
+                cout << endl << "Niepoprawny plik - koniec dzialania programu" << endl;
+                return;
+        }
+
+        rgb** Fragm = new rgb * [Wysokosc + 2];
+        for (int i = 0; i < Wysokosc + 2; i++)
+                Fragm[i] = new rgb[NaglowekInf.Szerokosc];
+
+        int Ilosc = NaglowekInf.Wysokosc / Wysokosc;
+        if (NaglowekInf.Wysokosc % Wysokosc)
+                Ilosc++;
+
+        PlikWyjscie.open(Nazwa, ios::out | ios::binary);
+
+        for (int i = 0; i < Ilosc; i++)
+        {
+                if (i == 0)
+                        WczytajFragment(Fragm, Naglowek, NaglowekInf, PlikDoWczytania, Wysokosc, 1);                                                                                    //w zaleznosci ktory fragment przekazujemy 1 2 lub 3
+                else if (i != Ilosc - 1)
+                        WczytajFragment(Fragm, Naglowek, NaglowekInf, PlikDoWczytania, Wysokosc, 2);
+                else
+                        WczytajFragment(Fragm, Naglowek, NaglowekInf, PlikDoWczytania, NaglowekInf.Wysokosc % Wysokosc, 3);
+
+                if (i == 0)
+                        Sobel(Fragm, Naglowek, NaglowekInf, Wysokosc + 1);
+                else if (i != Ilosc - 1)
+                        Sobel(Fragm, Naglowek, NaglowekInf, Wysokosc + 2);
+                else
+                {
+                        Sobel(Fragm, Naglowek, NaglowekInf, Wysokosc + 1);
+                        for (int l = 0; l < NaglowekInf.Szerokosc; l++)
+                        {
+                                Fragm[NaglowekInf.Wysokosc % Wysokosc][l].B = 0;
+                                Fragm[NaglowekInf.Wysokosc % Wysokosc][l].G = 0;
+                                Fragm[NaglowekInf.Wysokosc % Wysokosc][l].R = 0;
+                        }
+                }
+
+                if (i == 0)
+                        ZapiszHeader(PlikWyjscie, Naglowek, NaglowekInf);
+
+                if (i == 0)
+                        ZapiszFragment(Fragm, PlikWyjscie, Naglowek, NaglowekInf, Wysokosc, 1);
+                else if (i != Ilosc - 1)
+                        ZapiszFragment(Fragm, PlikWyjscie, Naglowek, NaglowekInf, Wysokosc + 2, 2);
+                else
+                        ZapiszFragment(Fragm, PlikWyjscie, Naglowek, NaglowekInf, NaglowekInf.Wysokosc % Wysokosc + 1, 3);
+        }
+
+        PlikWyjscie.close();
+        for (int i = 0; i < Wysokosc + 2; i++)
+                delete[] Fragm[i];
+        delete[] Fragm;
+}
+
+void ZapiszHeader(ofstream& PlikWyjscie, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf)
+{
+        PlikWyjscie.write((char*)&Naglowek.TypPliku, 2);
+        PlikWyjscie.write((char*)&Naglowek.Wielkosc, 4);
+        PlikWyjscie.write((char*)&Naglowek.PolaZarezerwowane1, 2);
+        PlikWyjscie.write((char*)&Naglowek.PolaZarezerwowane2, 2);
+        PlikWyjscie.write((char*)&Naglowek.Pozycja, 4);
+
+        PlikWyjscie.write((char*)&NaglowekInf.RozmiarNaglowkaPliku, 4);
+        PlikWyjscie.write((char*)&NaglowekInf.Szerokosc, 4);
+        PlikWyjscie.write((char*)&NaglowekInf.Wysokosc, 4);
+        PlikWyjscie.write((char*)&NaglowekInf.Plaszczyzny, 2);
+        PlikWyjscie.write((char*)&NaglowekInf.BityNaPiksel, 2);
+        PlikWyjscie.write((char*)&NaglowekInf.Kompresja, 4);
+        PlikWyjscie.write((char*)&NaglowekInf.RozmiarZdjecia, 4);
+        PlikWyjscie.write((char*)&NaglowekInf.RozdzielczoscPozioma, 4);
+        PlikWyjscie.write((char*)&NaglowekInf.RozdzielczoscPionowa, 4);
+        PlikWyjscie.write((char*)&NaglowekInf.IndexyKolorow, 4);
+        PlikWyjscie.write((char*)&NaglowekInf.NumeryKolorow, 4);
+        for (int k = 54; k < Naglowek.Pozycja; k++)
+                PlikWyjscie.write(reinterpret_cast<char*>(&NaglowekInf.Puste[k]), 1);
+}
+
+void WczytajFragment(rgb** Fragm, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf, ifstream& PlikDoWczytania, int Wysokosc, int KtoryFrag)
+{
+        int Pocz = 0;
+        int Koniec = 0;
+        if (KtoryFrag == 1)                                                                                                                             //KtoryFrag oznacza 1 - pierwszy, 2 - srodkowy, 3- ostatni
+        {
+                Pocz = 0;
+                Koniec = Wysokosc + 1;
+        }
+        else if (KtoryFrag == 2)
+        {
+                Pocz = 0;
+                Koniec = Wysokosc + 2;
+        }
+        else if (KtoryFrag == 3)
+        {
+                Pocz = 0;
+                Koniec = Wysokosc + 1;
+        }
+        for (int i = Pocz; i < Koniec; i++)
+        {
+                for (int k = 0; k < NaglowekInf.Szerokosc; k++)
+                {
+                        PlikDoWczytania.read(reinterpret_cast<char*>(&Fragm[i][k].B), 1);
+                        PlikDoWczytania.read(reinterpret_cast<char*>(&Fragm[i][k].G), 1);
+                        PlikDoWczytania.read(reinterpret_cast<char*>(&Fragm[i][k].R), 1);
+                }
+
+                for (int i = 0; i < ((Naglowek.Wielkosc - Naglowek.Pozycja - 3 * NaglowekInf.Wysokosc * NaglowekInf.Szerokosc) / NaglowekInf.Wysokosc) % 4; i++)
+                        PlikDoWczytania.ignore(1);
+        }
+
+        int Pozycja = PlikDoWczytania.tellg();
+        Pozycja -= 2 * ((NaglowekInf.Szerokosc * 3) + (4 - (3 * NaglowekInf.Szerokosc) % 4) % 4);
+        PlikDoWczytania.seekg(Pozycja, ios::beg);
+}
+
+void ZapiszFragment(rgb** Fragm, ofstream& PlikWyjscie, NaglowekZdjecia Naglowek, NaglowekPliku NaglowekInf, int Wysokosc, int KtoryFrag)
+{
+        int Pocz = 0;
+        int Koniec = 0;
+        if (KtoryFrag == 1)                                                                                                                             //KtoryFrag oznacza 1 - pierwszy, 2 - srodkowy, 3- ostatni
+        {
+                Pocz = 0;
+                Koniec = Wysokosc;
+        }
+        else if (KtoryFrag == 2)
+        {
+                Pocz = 1;
+                Koniec = Wysokosc - 1;
+        }
+        else if (KtoryFrag == 3)
+        {
+                Pocz = 1;
+                Koniec = Wysokosc;
+        }
+
+        for (int i = Pocz; i < Koniec; i++)
+        {
+                for (int k = 0; k < NaglowekInf.Szerokosc; k++)
+                {
+                        PlikWyjscie.write(reinterpret_cast<char*>(&Fragm[i][k].B), 1);
+                        PlikWyjscie.write(reinterpret_cast<char*>(&Fragm[i][k].G), 1);
+                        PlikWyjscie.write(reinterpret_cast<char*>(&Fragm[i][k].R), 1);
+                }
+
+                uint8_t zero = 0;
+
+                for (int i = 0; i < ((Naglowek.Wielkosc - Naglowek.Pozycja - 3 * NaglowekInf.Wysokosc * NaglowekInf.Szerokosc) / NaglowekInf.Wysokosc) % 4; i++)
+                        PlikWyjscie.write((char*)&zero, 1);
+        }
+}
